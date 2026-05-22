@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline | Smart Reminder PWA</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .container {
+      max-width: 400px;
+      padding: 24px;
+      border-radius: 24px;
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    }
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+    }
+    .icon svg {
+      width: 40px;
+      height: 40px;
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 12px;
+      letter-spacing: -0.025em;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-top: 0;
+      margin-bottom: 32px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .badge {
+      display: inline-block;
+      margin-bottom: 16px;
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge">Connection Lost</div>
+    <div class="icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.5M5 12.5a10.94 10.94 0 0 1 5.83-2.84M8.5 16a4.84 4.84 0 0 1 1.76-1.5M12 18h.01M16.76 6.1a18.9 18.9 0 0 1 2.24 1.4M5 7.5a18.94 18.94 0 0 1 7-2.3"/>
+      </svg>
+    </div>
+    <h1>You're Offline</h1>
+    <p>We couldn't connect to the server. You can still access your loaded reminders and manage tasks offline. They will sync automatically when you're back online.</p>
+    <button class="btn" onclick="window.location.reload(true)">Try Reconnecting</button>
+  </div>
+</body>
+</html>
