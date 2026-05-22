@@ -112,94 +112,106 @@ self.addEventListener("fetch", (event) => {
   }
 
   // General Assets Cache Strategy (Cache First, network fallback)
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return (
-        cachedResponse ||
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse.status === 200 && event.request.method === "GET") {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return networkResponse;
-        })
-      );
-    })
-  );
-});
+  const CACHE_NAME = "smart-reminder-v2";
 
-// Push Notification Event
-self.addEventListener("push", (event) => {
-  let data = { title: "Reminder", body: "You have a new reminder alert!" };
-  if (event.data) {
-    try {
-      data = event.data.json();
-    } catch (e) {
-      data = { title: "Reminder", body: event.data.text() };
-    }
-  }
+  self.addEventListener("install", event => {
+    self.skipWaiting();
+  });
 
-  const options = {
-    body: data.body,
-    icon: "/icons/icon-192x192.png",
-    badge: "/icons/icon-192x192.png",
-    vibrate: [200, 100, 200],
-    data: {
-      url: data.url || "/dashboard"
-    },
-    actions: [
-      { action: "open", title: "View Details" },
-      { action: "close", title: "Dismiss" }
-    ],
-    tag: data.tag || "general-reminder"
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title || "Reminder Alert", options)
-  );
-});
-
-// Notification Click Event
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-  
-  if (event.action === "close") {
-    return;
-  }
-
-  const urlToOpen = event.notification.data.url;
-
-  event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
-      // If a window is already open, focus it and navigate
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
-        if (client.url.includes(self.location.origin) && "focus" in client) {
-          client.focus();
-          return client.navigate(urlToOpen);
-        }
-      }
-      // If no window is open, open a new one
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(urlToOpen);
-      }
-    })
-  );
-});
-
-// Background Sync Event
-self.addEventListener("sync", (event) => {
-  if (event.tag === "sync-reminders") {
-    console.log("[Service Worker] Background sync event triggered");
-    // We notify open clients to trigger database synchronization
+  self.addEventListener("activate", event => {
     event.waitUntil(
-      self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-        clients.forEach((client) => {
-          client.postMessage({ type: "SYNC_REMINDERS" });
-        });
+      caches.keys().then(keys =>
+        Promise.all(
+          keys.map(key => {
+            if (key !== CACHE_NAME) {
+              return caches.delete(key);
+            }
+          })
+        )
+      )
+    );
+
+    self.clients.claim();
+  });
+
+  self.addEventListener("fetch", event => {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => response)
+        .catch(() => caches.match(event.request))
+    );
+  });
+
+  // Push Notification Event
+  self.addEventListener("push", (event) => {
+    let data = { title: "Reminder", body: "You have a new reminder alert!" };
+    if (event.data) {
+      try {
+        data = event.data.json();
+      } catch (e) {
+        data = { title: "Reminder", body: event.data.text() };
+      }
+    }
+
+    const options = {
+      body: data.body,
+      icon: "/icons/icon-192x192.png",
+      badge: "/icons/icon-192x192.png",
+      vibrate: [200, 100, 200],
+      data: {
+        url: data.url || "/dashboard"
+      },
+      actions: [
+        { action: "open", title: "View Details" },
+        { action: "close", title: "Dismiss" }
+      ],
+      tag: data.tag || "general-reminder"
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(data.title || "Reminder Alert", options)
+    );
+  });
+
+  // Notification Click Event
+  self.addEventListener("notificationclick", (event) => {
+    event.notification.close();
+
+    if (event.action === "close") {
+      return;
+    }
+
+    const urlToOpen = event.notification.data.url;
+
+    event.waitUntil(
+      self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+        // If a window is already open, focus it and navigate
+        for (let i = 0; i < windowClients.length; i++) {
+          const client = windowClients[i];
+          if (client.url.includes(self.location.origin) && "focus" in client) {
+            client.focus();
+            return client.navigate(urlToOpen);
+          }
+        }
+        // If no window is open, open a new one
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(urlToOpen);
+        }
       })
     );
-  }
-});
+  });
+
+  // Background Sync Event
+  self.addEventListener("sync", (event) => {
+    if (event.tag === "sync-reminders") {
+      console.log("[Service Worker] Background sync event triggered");
+      // We notify open clients to trigger database synchronization
+      event.waitUntil(
+        self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({ type: "SYNC_REMINDERS" });
+          });
+        })
+      );
+    }
+  });
