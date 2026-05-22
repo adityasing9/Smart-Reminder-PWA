@@ -41,6 +41,8 @@ def run_migrations_offline() -> None:
 
     """
     url = settings.DATABASE_URL
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -61,7 +63,10 @@ def run_migrations_online() -> None:
     """
     # Overwrite the URL in alembic configuration with settings.DATABASE_URL
     alembic_config = config.get_section(config.config_ini_section) or {}
-    alembic_config["sqlalchemy.url"] = settings.DATABASE_URL
+    db_url = settings.DATABASE_URL
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    alembic_config["sqlalchemy.url"] = db_url
     
     connectable = engine_from_config(
         alembic_config,
