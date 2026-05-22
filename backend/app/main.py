@@ -7,6 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from app.database import engine, Base
 from app.routes import auth, reminders, push
 from app.scheduler.jobs import check_and_trigger_reminders
+from app.config import settings
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -45,14 +46,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS
-# For safety in local testing and hosting targets
+# Configure CORS dynamically from settings
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://smart-reminder-pwa.vercel.app",  # Production NextJS UI
-    "*", # Allow all temporarily for easy development/Docker orchestration
 ]
+
+# Add the production frontend URL if configured
+if settings.FRONTEND_URL and settings.FRONTEND_URL not in origins:
+    origins.append(settings.FRONTEND_URL)
 
 app.add_middleware(
     CORSMiddleware,

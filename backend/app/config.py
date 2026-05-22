@@ -4,7 +4,7 @@ from pydantic import Field
 
 class Settings(BaseSettings):
     DATABASE_URL: str = Field(
-        default="mysql+pymysql://reminder_user:reminder_pass@localhost:3306/reminder_db",
+        default="postgresql://postgres:postgres@localhost:5432/postgres",
         validation_alias="DATABASE_URL"
     )
     JWT_SECRET: str = Field(
@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     VAPID_CLAIM_EMAIL: str = Field(
         default="mailto:admin@smartreminder.pwa",
         validation_alias="VAPID_CLAIM_EMAIL"
+    )
+
+    # Frontend URL for CORS (set to your Vercel deployment URL in production)
+    FRONTEND_URL: str = Field(
+        default="http://localhost:3000",
+        validation_alias="FRONTEND_URL"
     )
 
     model_config = SettingsConfigDict(

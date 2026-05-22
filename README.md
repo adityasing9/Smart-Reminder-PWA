@@ -1,108 +1,116 @@
 # Smart Reminder PWA
 
-A mobile-first, production-ready Progressive Web Application (PWA) built using Next.js (App Router), TypeScript, Tailwind CSS, FastAPI, and MySQL. It features offline task viewing/creation, background synchronization, and Web Push notifications.
+A full-stack Progressive Web App for managing reminders with push notifications, offline support, and recurring schedules.
 
-## Features
-- 🚀 **Progressive Web App**: Installable on iOS & Android ("Add to Home Screen"), custom splash screens, standalone display, and responsive layouts.
-- 📶 **Offline-First Mechanics**: Browse, create, toggle, and delete reminders offline. Backed by **IndexedDB** which automatically queues mutations and synchronizes with the server once connection returns.
-- 🔔 **Web Push Alerts**: Integrates **VAPID Web Push notifications** via a minute-based scheduler, alerting you on your device even if the PWA window is minimized or closed.
-- 🔑 **Secure Authentication**: JWT-based credentials registration and logins, cryptographically hashed passwords.
-- 🐳 **Dockerized Stack**: Launch the entire environment (MySQL, API, Frontend) using a single command.
+## Tech Stack
 
----
+- **Frontend**: Next.js 16 + TypeScript + TailwindCSS
+- **Backend**: FastAPI (Python) + SQLAlchemy
+- **Database**: Supabase (PostgreSQL)
+- **Push Notifications**: Web Push (VAPID)
+- **Offline**: IndexedDB + Service Worker + Background Sync
 
-## Directory Structure
+## Architecture
+
 ```
-Reminder/
-├── docker-compose.yml
-├── .env
-├── README.md
-├── backend/
-│   ├── app/
-│   │   ├── models/        # SQLAlchemy tables (User, Reminder, PushSubscription)
-│   │   ├── schemas/       # Pydantic schemas
-│   │   ├── routes/        # Router files (auth, reminders, push)
-│   │   ├── services/      # Passwords (bcrypt), JWT tokens, PyWebPush sender
-│   │   ├── scheduler/     # APScheduler checks (runs check/trigger tasks)
-│   │   └── main.py        # FastAPI initialization and lifespan handlers
-│   ├── alembic.ini
-│   ├── Dockerfile
-│   └── requirements.txt
-└── frontend/
-    ├── public/
-    │   ├── manifest.json  # PWA configuration
-    │   ├── service-worker.js # Custom caching policies (Cache First, Network First)
-    │   └── offline.html   # Custom offline warning page
-    ├── src/
-    │   ├── app/           # App router views (Dashboard, Login, Register, Settings)
-    │   ├── components/    # Reusable UI (BottomNavigation, OfflineIndicator, forms)
-    │   └── lib/
-    │       ├── api.ts     # API wrapper with online check & DB queue fallbacks
-    │       ├── db.ts      # IndexedDB configuration via idb library
-    │       └── swRegister.ts # Service worker & Push Notification triggers
-    └── Dockerfile
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│   Next.js PWA    │────▶│   FastAPI API     │────▶│    Supabase      │
+│   (Vercel)       │     │   (Render)        │     │   (PostgreSQL)   │
+└──────────────────┘     └──────────────────┘     └──────────────────┘
 ```
 
----
+## Local Development
 
-## Getting Started
+### Prerequisites
+- Python 3.11+
+- Node.js 20+
+- A [Supabase](https://supabase.com) project
 
-### 1. Prerequisites
-- Docker & Docker Compose installed.
-- Or locally: Node.js (v18+) and Python (v3.10+).
+### 1. Setup Environment Variables
 
-### 2. Configuration (`.env`)
-A root-level `.env` file has already been populated with pre-generated VAPID keys for direct out-of-the-box local runs.
+Copy and edit the `.env` file in the project root:
 
-If you ever wish to re-generate VAPID keys:
+```env
+# Supabase PostgreSQL Connection
+DATABASE_URL=postgresql://postgres.YOUR_PROJECT_REF:YOUR_PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres
+
+# Backend Config
+JWT_SECRET=your_jwt_secret_here
+VAPID_PUBLIC_KEY=your_vapid_public_key
+VAPID_PRIVATE_KEY=your_vapid_private_key
+VAPID_CLAIM_EMAIL=mailto:your@email.com
+
+# Frontend
+FRONTEND_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### 2. Run Backend
+
 ```bash
-node -e "const crypto = require('crypto'); const ec = crypto.createECDH('prime256v1'); ec.generateKeys(); console.log('PUB:', ec.getPublicKey('base64url')); console.log('PRIV:', ec.getPrivateKey('base64url'));"
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
-Place the resulting keys into `.env`:
-- `VAPID_PUBLIC_KEY`: Use generated `PUB`
-- `VAPID_PRIVATE_KEY`: Use generated `PRIV`
 
-### 3. Launching via Docker Compose
-Build and run the entire stack:
+Tables are auto-created in Supabase on first startup.
+
+### 3. Run Frontend
+
 ```bash
-docker compose up --build
+cd frontend
+npm install
+npm run dev
 ```
-Once initialized:
-- **Frontend App**: [http://localhost:3000](http://localhost:3000)
-- **FastAPI API**: [http://localhost:8000](http://localhost:8000)
-- **API Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
----
+Open [http://localhost:3000](http://localhost:3000).
 
-## Deployment Instructions
+## Deployment
 
-### Backend (Google Cloud Run)
-1. **Containerize & Push**:
-   Build the Docker container and push it to Google Artifact Registry:
-   ```bash
-   gcloud builds submit --tag gcr.io/[PROJECT_ID]/reminder-backend ./backend
-   ```
-2. **Deploy to Cloud Run**:
-   Run the deployment command:
-   ```bash
-   gcloud run deploy reminder-backend \
-     --image gcr.io/[PROJECT_ID]/reminder-backend \
-     --platform managed \
-     --allow-unauthenticated \
-     --add-cloudsql-instances [SQL_INSTANCE_CONNECTION_NAME] \
-     --update-env-vars DATABASE_URL=mysql+pymysql://[DB_USER]:[DB_PASS]@localhost/[DB_NAME]?unix_socket=/cloudsql/[SQL_INSTANCE_CONNECTION_NAME],JWT_SECRET=[SECRET],VAPID_PUBLIC_KEY=[PUB],VAPID_PRIVATE_KEY=[PRIV]
-   ```
+### Backend → Render
 
-### Frontend (Vercel)
-1. Install Vercel CLI or log in to the Vercel Dashboard.
-2. Link the repository. Select `frontend` as the root directory of the application.
-3. Configure the environment variables in Vercel:
-   - `NEXT_PUBLIC_API_URL`: Your live Google Cloud Run Backend URL (e.g. `https://reminder-backend-xyz.run.app`).
-4. Trigger the deployment.
+1. Push code to GitHub
+2. Go to [Render Dashboard](https://dashboard.render.com) → **New** → **Web Service**
+3. Connect your GitHub repo
+4. Set:
+   - **Root Directory**: `backend`
+   - **Runtime**: Docker
+5. Add environment variables:
+   - `DATABASE_URL` = your Supabase connection string
+   - `JWT_SECRET` = a strong secret key
+   - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_CLAIM_EMAIL`
+   - `FRONTEND_URL` = your Vercel URL (after deploying frontend)
+6. Deploy
 
----
+### Frontend → Vercel
 
-## Offline Caching Strategy
-- **App Shell (JS, CSS, static images)**: Cache-First. Loads instantly from local service worker cache.
-- **Data (API `/reminders`)**: Network-First. Fetches live database items when connected, falling back to local IndexedDB when offline.
-- **Mutations (Creation/Toggle/Delete)**: Executes instantly in local IndexedDB. Places operation in a queue. When the connection returns, the browser registers background sync and sequentially updates the server.
+1. Go to [Vercel Dashboard](https://vercel.com/dashboard) → **Add New** → **Project**
+2. Import your GitHub repo
+3. Set:
+   - **Root Directory**: `frontend`
+   - **Framework Preset**: Next.js
+4. Add environment variable:
+   - `NEXT_PUBLIC_API_URL` = your Render backend URL (e.g. `https://smart-reminder-api.onrender.com`)
+5. Deploy
+
+### Post-Deployment
+
+After both are deployed, update:
+- **Render**: Set `FRONTEND_URL` = your Vercel URL (e.g. `https://smart-reminder-pwa.vercel.app`)
+- Redeploy the backend on Render to apply the CORS update
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/register` | Register a new user |
+| POST | `/login` | Login and get JWT token |
+| GET | `/reminders` | Get all reminders (auth required) |
+| POST | `/reminders` | Create a reminder |
+| PUT | `/reminders/{id}` | Update a reminder |
+| DELETE | `/reminders/{id}` | Delete a reminder |
+| POST | `/complete/{id}` | Complete/rollover a reminder |
+| POST | `/restore/{id}` | Restore a completed reminder |
+| GET | `/push/vapid-public-key` | Get VAPID public key |
+| POST | `/push/subscribe` | Subscribe to push notifications |
+| POST | `/push/unsubscribe` | Unsubscribe from push |

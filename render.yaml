@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: smart-reminder-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    repo: https://github.com/adityasing9/Smart-Reminder-PWA
+    branch: main
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_CLAIM_EMAIL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+    healthCheckPath: /

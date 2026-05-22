@@ -3,13 +3,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import settings
 
-# Create SQLAlchemy engine
-# pool_recycle helps avoid "MySQL server has gone away" errors
+# Create SQLAlchemy engine for PostgreSQL (Supabase)
 db_url = settings.DATABASE_URL
 engine = create_engine(
     db_url,
-    pool_recycle=3600,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
