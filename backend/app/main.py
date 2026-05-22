@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
 import logging
-from fastapi import FastAPI
+import traceback
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from app.database import engine, Base
+from app.database import engine, Base, SessionLocal
 from app.routes import auth, reminders, push
 from app.scheduler.jobs import check_and_trigger_reminders
 from app.config import settings
@@ -70,6 +72,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Global exception handler to ensure CORS headers are present on 500 errors
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception on {request.method} {request.url}: {exc}")
+    logger.error(traceback.format_exc())
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error. Check server logs for details."},
+    )
+
 # Include Routers
 app.include_router(auth.router)
 app.include_router(reminders.router)
@@ -82,3 +94,26 @@ def read_root():
         "service": "Smart Reminder API",
         "version": "1.0.0"
     }
+
+@app.get("/health")
+def health_check():
+    """Check database connectivity and return diagnostic info."""
+    db_status = "unknown"
+    db_error = None
+    try:
+        db = SessionLocal()
+        db.execute(db.bind.dialect.do_ping if hasattr(db.bind.dialect, 'do_ping') else __import__('sqlalchemy').text("SELECT 1"))
+        db.close()
+        db_status = "connected"
+    except Exception as e:
+        db_status = "error"
+        db_error = str(e)
+    
+    return {
+        "status": "online",
+        "database": db_status,
+        "database_error": db_error,
+        "frontend_url": settings.FRONTEND_URL,
+        "cors_origins": origins,
+    }
+
