@@ -1,4 +1,4 @@
-const CACHE_NAME = "smart-reminder-cache-v1";
+const CACHE_NAME = "smart-reminder-cache-v2";
 const OFFLINE_URL = "/offline.html";
 
 // Assets to cache immediately on SW install
@@ -40,6 +40,11 @@ self.addEventListener("activate", (event) => {
 // Fetch Event
 self.addEventListener("fetch", (event) => {
   const requestUrl = new URL(event.request.url);
+
+  // Skip cross-origin requests entirely — let the browser handle CORS natively
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
 
   // 1. API Cache Strategy (Network First, fallback to cache)
   if (requestUrl.pathname.startsWith("/api/") || requestUrl.port === "8000") {
