@@ -142,6 +142,7 @@ export default function RegisterPage() {
                 <input
                   type="password"
                   id="password"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimum 6 characters"
