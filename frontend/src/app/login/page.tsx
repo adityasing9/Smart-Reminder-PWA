@@ -49,7 +49,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col justify-between bg-[#f0f2f5] px-6 py-8 relative">
       {/* Glow elements */}
       <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none" />
-      
+
       {/* Back Button */}
       <div className="flex items-center">
         <Link
@@ -93,6 +93,7 @@ export default function LoginPage() {
                 <input
                   type="email"
                   id="email"
+                  autoComplete="username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
@@ -102,27 +103,16 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="text-xs font-semibold text-slate-600">
-                Password
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                  <Lock className="h-4 w-4" />
-                </span>
-                <input
-                  type="password"
-                  id="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  disabled={isLoading}
-                  className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 shadow-sm transition-all focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
-                />
-              </div>
-            </div>
-
+            <input
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              disabled={isLoading}
+              className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-3 text-sm text-slate-800 placeholder-slate-400 shadow-sm transition-all focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+            />
             <button
               type="submit"
               disabled={isLoading}
@@ -141,7 +131,7 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-      
+
       {/* Empty space for design balance */}
       <div className="h-4" />
     </div>
