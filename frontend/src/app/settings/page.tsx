@@ -10,7 +10,10 @@ import {
   Database, 
   RefreshCw, 
   LogOut, 
-  ShieldAlert, 
+  Sparkles,
+  Download,
+  CheckCircle,
+  ExternalLink,
   AlertCircle 
 } from "lucide-react";
 import { authApi, synchronizeOfflineOperations } from "@/lib/api";
@@ -19,6 +22,17 @@ import {
   subscribeUserToPush, 
   unsubscribeUserFromPush 
 } from "@/lib/swRegister";
+import { 
+  checkNotificationPermission, 
+  requestNotificationPermission,
+  syncAllNativeReminderNotifications
+} from "@/lib/nativeNotifications";
+import { 
+  checkForAppUpdates, 
+  startAppUpdate, 
+  CURRENT_APP_VERSION, 
+  UpdateInfo 
+} from "@/lib/appUpdater";
 import { getCachedReminders, getSyncQueue } from "@/lib/db";
 import BottomNavigation from "@/components/BottomNavigation";
 
@@ -31,6 +45,11 @@ export default function SettingsPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState("");
   const [loadingPush, setLoadingPush] = useState(true);
+
+  // App Update state
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateMessage, setUpdateMessage] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -53,8 +72,10 @@ export default function SettingsPage() {
 
   const checkPushStatus = async () => {
     setLoadingPush(true);
-    const subscribed = await checkPushSubscription();
-    setNotificationsEnabled(subscribed);
+    // Check both native permission and web push subscription
+    const nativePerm = await checkNotificationPermission();
+    const webSubscribed = await checkPushSubscription();
+    setNotificationsEnabled(nativePerm || webSubscribed);
     setLoadingPush(false);
   };
 
@@ -62,25 +83,24 @@ export default function SettingsPage() {
     setFeedbackMsg("");
     if (notificationsEnabled) {
       const success = await unsubscribeUserFromPush();
-      if (success) {
-        setNotificationsEnabled(false);
-      } else {
-        setFeedbackMsg("Failed to unsubscribe.");
-      }
+      setNotificationsEnabled(false);
+      setFeedbackMsg(success ? "Notifications turned off." : "Notifications disabled locally.");
     } else {
-      // Request permission & subscribe
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setFeedbackMsg("Notification permission was denied.");
+      // 1. Request native permission
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        setFeedbackMsg("Notification permission was denied in device settings.");
         return;
       }
       
-      const success = await subscribeUserToPush();
-      if (success) {
-        setNotificationsEnabled(true);
-      } else {
-        setFeedbackMsg("Could not enroll push token with server.");
-      }
+      // 2. Also register web push if available
+      await subscribeUserToPush();
+      setNotificationsEnabled(true);
+      setFeedbackMsg("Notifications enabled! Alarms and alerts are active.");
+
+      // Sync upcoming reminders into native alarms immediately
+      const cached = await getCachedReminders();
+      await syncAllNativeReminderNotifications(cached);
     }
   };
 
@@ -92,6 +112,8 @@ export default function SettingsPage() {
       if (success) {
         setFeedbackMsg("Sync complete! Database fully updated.");
         await loadDiagnostics();
+        const cached = await getCachedReminders();
+        await syncAllNativeReminderNotifications(cached);
       } else {
         setFeedbackMsg("Could not complete sync. Check connection.");
       }
@@ -99,6 +121,24 @@ export default function SettingsPage() {
       setFeedbackMsg("Sync failed: " + err.message);
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleCheckUpdate = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateMessage("");
+    try {
+      const info = await checkForAppUpdates();
+      setUpdateInfo(info);
+      if (info.hasUpdate) {
+        setUpdateMessage(`New update available: v${info.latestVersion}`);
+      } else {
+        setUpdateMessage(`You're up to date! (v${CURRENT_APP_VERSION})`);
+      }
+    } catch (err) {
+      setUpdateMessage("Could not check updates. Check internet connection.");
+    } finally {
+      setIsCheckingUpdate(false);
     }
   };
 
@@ -116,7 +156,7 @@ export default function SettingsPage() {
       </div>
 
       {feedbackMsg && (
-        <div className="mt-5 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-xs text-emerald-600 shadow-sm">
+        <div className="mt-5 flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-xs text-emerald-600 shadow-sm animate-fadeIn">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{feedbackMsg}</span>
         </div>
@@ -143,10 +183,10 @@ export default function SettingsPage() {
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-1">
                 {notificationsEnabled ? <Bell className="h-3.5 w-3.5 text-emerald-600" /> : <BellOff className="h-3.5 w-3.5 text-slate-400" />}
-                <span>Push Alerts</span>
+                <span>Reminder Notifications</span>
               </h3>
               <p className="text-[11px] text-slate-500 leading-relaxed max-w-[200px]">
-                Receive instant notifications on this device when reminders trigger.
+                High-priority native device alarms &amp; notifications when reminders trigger.
               </p>
             </div>
             
@@ -165,6 +205,52 @@ export default function SettingsPage() {
               />
             </button>
           </div>
+        </div>
+
+        {/* In-App Update Card */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-1">
+                <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                <span>App Version &amp; Updates</span>
+              </h3>
+              <p className="text-xs font-medium text-slate-700">
+                Installed Version: <span className="font-bold text-slate-900">v{CURRENT_APP_VERSION}</span>
+              </p>
+            </div>
+            <button
+              onClick={handleCheckUpdate}
+              disabled={isCheckingUpdate}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm active:scale-95 transition-all disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3 w-3 ${isCheckingUpdate ? "animate-spin text-emerald-600" : ""}`} />
+              <span>{isCheckingUpdate ? "Checking..." : "Check"}</span>
+            </button>
+          </div>
+
+          {updateMessage && (
+            <div className={`p-2.5 rounded-xl text-xs font-medium flex items-center gap-2 ${
+              updateInfo?.hasUpdate 
+                ? "bg-amber-50 text-amber-700 border border-amber-100" 
+                : "bg-emerald-50 text-emerald-700 border border-emerald-100"
+            }`}>
+              {updateInfo?.hasUpdate ? <Sparkles className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />}
+              <span>{updateMessage}</span>
+            </div>
+          )}
+
+          {updateInfo?.hasUpdate && (
+            <div className="pt-1">
+              <button
+                onClick={() => startAppUpdate(updateInfo.apkDownloadUrl, updateInfo.githubReleaseUrl)}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 py-3 text-xs font-bold text-white shadow-md shadow-emerald-600/20 active:scale-95 transition-all"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Download &amp; Install APK (v{updateInfo.latestVersion})</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Storage / Offline Diagnostic Card */}

@@ -86,7 +86,7 @@ export default function ReminderCard({ reminder, onComplete, onDelete }: Reminde
 
         {/* Content Area */}
         <div className="flex-1 min-w-0">
-          <Link href={`/reminder/${reminder.id}`} className="block">
+          <Link href={`/reminder/edit?id=${reminder.id}`} className="block">
             <h3
               className={`text-base font-semibold leading-6 text-slate-800 truncate transition-colors ${
                 reminder.status === "completed" ? "line-through text-slate-400" : "group-hover:text-emerald-600"
@@ -157,9 +157,9 @@ export default function ReminderCard({ reminder, onComplete, onDelete }: Reminde
         </div>
 
         {/* Action Panel */}
-        <div className="flex items-center gap-1 self-start">
+        <div className="flex-1 min-w-0 flex items-center justify-end gap-1 self-start">
           <Link
-            href={`/reminder/${reminder.id}`}
+            href={`/reminder/edit?id=${reminder.id}`}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
             aria-label="Edit reminder"
           >

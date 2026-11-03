@@ -1,14 +1,23 @@
 {
   "name": "frontend",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
+    "build:export": "next build --webpack",
+    "cap:sync": "cap sync android",
+    "cap:copy": "cap copy android",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/dialog": "^8.0.1",
+    "@capacitor/local-notifications": "^8.3.1",
     "idb": "^8.0.3",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",

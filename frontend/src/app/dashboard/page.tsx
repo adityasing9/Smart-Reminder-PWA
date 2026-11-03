@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { Bell, Search, AlertCircle, RefreshCw, CalendarRange, CheckCircle2 } from "lucide-react";
 import { remindersApi, authApi, isOnline } from "@/lib/api";
 import { ReminderLocal } from "@/lib/db";
+import { 
+  syncAllNativeReminderNotifications, 
+  cancelNativeReminderNotification 
+} from "@/lib/nativeNotifications";
 import ReminderCard from "@/components/ReminderCard";
 import BottomNavigation from "@/components/BottomNavigation";
 
@@ -39,6 +43,8 @@ export default function DashboardPage() {
     try {
       const data = await remindersApi.getAll();
       setReminders(data);
+      // Synchronize alarms on device
+      await syncAllNativeReminderNotifications(data);
     } catch (err: any) {
       setError(err.message || "Failed to load reminders.");
     } finally {
@@ -50,6 +56,7 @@ export default function DashboardPage() {
   const handleComplete = async (id: number) => {
     try {
       const updated = await remindersApi.complete(id);
+      await cancelNativeReminderNotification(id);
       // Update local state immediately
       setReminders((prev) =>
         prev.map((r) => (r.id === id ? updated : r))
@@ -65,6 +72,7 @@ export default function DashboardPage() {
     
     try {
       await remindersApi.delete(id);
+      await cancelNativeReminderNotification(id);
       // Remove from state immediately
       setReminders((prev) => prev.filter((r) => r.id !== id));
     } catch (err: any) {

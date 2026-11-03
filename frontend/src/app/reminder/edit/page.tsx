@@ -1,17 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Trash2, CalendarRange, AlertCircle } from "lucide-react";
 import { remindersApi } from "@/lib/api";
 import { getCachedReminderById, ReminderLocal } from "@/lib/db";
+import { 
+  scheduleNativeReminderNotification, 
+  cancelNativeReminderNotification 
+} from "@/lib/nativeNotifications";
 import ReminderForm from "@/components/ReminderForm";
 
-export default function ReminderDetailPage() {
+function ReminderEditContent() {
   const router = useRouter();
-  const params = useParams();
-  const id = Number(params.id);
+  const searchParams = useSearchParams();
+  const idParam = searchParams.get("id");
+  const id = idParam ? Number(idParam) : null;
 
   const [reminder, setReminder] = useState<ReminderLocal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,22 +24,21 @@ export default function ReminderDetailPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!id) return;
-    loadReminder();
+    if (!id) {
+      setIsLoading(false);
+      return;
+    }
+    loadReminder(id);
   }, [id]);
 
-  const loadReminder = async () => {
+  const loadReminder = async (reminderId: number) => {
     setIsLoading(true);
     setError("");
     try {
-      // 1. Load from IndexedDB immediately for instant offline-first rendering
-      const localData = await getCachedReminderById(id);
+      const localData = await getCachedReminderById(reminderId);
       if (localData) {
         setReminder(localData);
       }
-
-      // 2. Fetch fresh data if online (optional fallback check)
-      // Since reminders list is already stashed, getCachedReminderById is normally highly accurate
     } catch (err: any) {
       setError("Failed to load reminder details.");
     } finally {
@@ -43,10 +47,14 @@ export default function ReminderDetailPage() {
   };
 
   const handleUpdate = async (formData: any) => {
+    if (!id) return;
     setIsSaving(true);
     setError("");
     try {
-      await remindersApi.update(id, formData);
+      const updated = await remindersApi.update(id, formData);
+      if (updated) {
+        await scheduleNativeReminderNotification(updated);
+      }
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to update reminder.");
@@ -55,11 +63,13 @@ export default function ReminderDetailPage() {
   };
 
   const handleDelete = async () => {
+    if (!id) return;
     if (!confirm("Are you sure you want to delete this reminder?")) return;
 
     setIsSaving(true);
     try {
       await remindersApi.delete(id);
+      await cancelNativeReminderNotification(id);
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to delete reminder.");
@@ -84,8 +94,8 @@ export default function ReminderDetailPage() {
         {/* Delete Button */}
         <button
           onClick={handleDelete}
-          disabled={isSaving}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100/50 shadow-sm active:scale-95 transition-all"
+          disabled={isSaving || !id}
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-100/50 shadow-sm active:scale-95 transition-all disabled:opacity-50"
           aria-label="Delete reminder"
         >
           <Trash2 className="h-4 w-4" />
@@ -125,5 +135,17 @@ export default function ReminderDetailPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ReminderEditPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+      </div>
+    }>
+      <ReminderEditContent />
+    </Suspense>
   );
 }

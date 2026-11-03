@@ -1,10 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import PWARegister from "@/components/PWARegister";
 import OfflineIndicator from "@/components/OfflineIndicator";
-
-const inter = Inter({ subsets: ["latin"] });
+import NativeInitializer from "@/components/NativeInitializer";
+import AppUpdateModal from "@/components/AppUpdateModal";
 
 export const metadata: Metadata = {
   title: "Smart Reminder",
@@ -36,8 +35,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full bg-[#f0f2f5] text-slate-800 antialiased">
-      <body className={`${inter.className} min-h-full flex flex-col`}>
+      <body className="min-h-full flex flex-col">
         <PWARegister />
+        <NativeInitializer />
+        <AppUpdateModal />
         <OfflineIndicator />
         <main className="flex-1 w-full max-w-md mx-auto bg-[#f0f2f5] min-h-screen shadow-md border-x border-slate-200 pb-16 relative">
           {children}
@@ -46,3 +47,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -24,12 +24,13 @@
 
 ## ✨ Features
 
-- **🚀 Progressive Web App (PWA)**: Installable on Desktop, iOS, and Android for a native app experience.
-- **🔔 Push Notifications**: Get notified even when the app is closed using Web Push (VAPID).
+- **📱 Native Android App (APK)**: Converted into a native Android app powered by Capacitor.
+- **🔔 Proper High-Priority Notifications**: Native device alarms, heads-up notifications, vibration, sound, and Android Doze-mode bypass for guaranteed reminder delivery.
+- **🔄 In-App Updates**: Built-in update detector that checks GitHub Releases for new APK versions and lets users update with a single tap.
+- **🚀 Automated CI/CD Releases**: GitHub Actions automatically compiles, signs, and attaches the APK to GitHub Releases on tag push or manual click.
 - **📴 Offline Support**: Fully functional without internet connection. Data syncs automatically in the background when reconnected using IndexedDB and Service Workers.
 - **🔄 Recurring Reminders**: Flexible scheduling for daily, weekly, or custom interval reminders.
 - **🔒 Secure Authentication**: JWT-based secure user authentication.
-- **🌓 Dark/Light Mode**: Beautiful UI that adapts to your system preferences.
 
 ---
 
@@ -157,5 +158,36 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 | `DELETE`| `/reminders/{id}` | Delete a reminder | ✅ |
 | `POST` | `/complete/{id}` | Mark complete / trigger rollover | ✅ |
 | `POST` | `/push/subscribe` | Register a device for push | ✅ |
+
+---
+
+## 📱 Android App & GitHub Releases CI/CD
+
+### 🔨 Building the Android APK Locally
+```bash
+cd frontend
+npm run build:export
+npx cap sync android
+cd android
+./gradlew assembleRelease
+# Output APK is in: android/app/build/outputs/apk/release/
+```
+
+### 🚀 Triggering Automated GitHub Releases with APK
+Every time you want to release a new version of the APK:
+1. **Push a Git tag**:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+2. **Or Use One-Click GitHub Actions**:
+   - Go to your GitHub repository -> **Actions** tab.
+   - Select **Build & Release Android APK**.
+   - Click **Run workflow**, enter the version (e.g. `1.0.0`), and click **Run**.
+   - GitHub Actions will build the signed APK and publish a new GitHub Release with the APK attached automatically.
+
+### 🔄 In-App Updates
+The app automatically checks `https://api.github.com/repos/adityasing9/Smart-Reminder-PWA/releases/latest`. When a newer APK is available, users see an in-app update prompt with release notes and can update with one tap. Users can also manually check under **Settings > App Version & Updates**.
+
 
 <p align="center">Made with ❤️ for smarter productivity.</p>
