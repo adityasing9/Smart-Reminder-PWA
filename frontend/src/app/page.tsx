@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bell, ArrowRight } from "lucide-react";
+import { Bell, ArrowRight, ShieldCheck } from "lucide-react";
+import { authApi } from "@/lib/api";
 import Splash from "@/components/Splash";
 
 export default function WelcomePage() {
@@ -77,19 +78,23 @@ export default function WelcomePage() {
 
       {/* Buttons */}
       <div className="w-full max-w-xs space-y-3 mt-8 z-10">
-        <Link
-          href="/register"
+        <button
+          onClick={() => {
+            authApi.continueAsGuest();
+            router.push("/dashboard");
+          }}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-tr from-emerald-600 to-green-500 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/20 transition-transform hover:from-emerald-700 hover:to-green-600 active:scale-98"
         >
-          <span>Get Started</span>
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+          <ShieldCheck className="h-4 w-4" />
+          <span>Open App (Local Mode)</span>
+          <ArrowRight className="h-4 w-4 ml-1" />
+        </button>
         
         <Link
-          href="/login"
-          className="flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-3.5 text-sm font-semibold text-slate-600 transition-colors shadow-sm"
+          href="/register"
+          className="flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 transition-colors shadow-sm"
         >
-          I already have an account
+          Create Profile
         </Link>
       </div>
     </div>

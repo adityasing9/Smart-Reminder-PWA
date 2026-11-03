@@ -120,6 +120,26 @@ export default function LoginPage() {
             >
               {isLoading ? "Signing in..." : "Sign In"}
             </button>
+
+            <div className="relative my-4 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
+              </div>
+              <span className="relative bg-[#f0f2f5] px-2 text-[11px] font-medium text-slate-400">
+                OR
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                authApi.continueAsGuest();
+                router.push("/dashboard");
+              }}
+              className="w-full rounded-xl border border-slate-200 bg-white py-3 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all active:scale-98"
+            >
+              Continue in Offline / Local Mode
+            </button>
           </form>
 
           {/* Footer */}

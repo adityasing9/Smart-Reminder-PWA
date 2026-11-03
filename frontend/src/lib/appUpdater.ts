@@ -12,7 +12,7 @@ export interface UpdateInfo {
 }
 
 // Current App Version (matches package.json & Android build version)
-export const CURRENT_APP_VERSION = "1.0.0";
+export const CURRENT_APP_VERSION = "1.0.1";
 export const GITHUB_REPO = "adityasing9/Smart-Reminder-PWA";
 
 /**
