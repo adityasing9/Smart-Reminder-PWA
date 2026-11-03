@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, BellPlus } from "lucide-react";
 import { remindersApi } from "@/lib/api";
-import { scheduleNativeReminderNotification } from "@/lib/nativeNotifications";
+import { 
+  scheduleNativeReminderNotification,
+  checkNotificationPermission,
+  requestNotificationPermission 
+} from "@/lib/nativeNotifications";
 import ReminderForm from "@/components/ReminderForm";
 
 export default function NewReminderPage() {
@@ -17,6 +21,11 @@ export default function NewReminderPage() {
     setIsLoading(true);
     setError("");
     try {
+      const hasPerm = await checkNotificationPermission();
+      if (!hasPerm) {
+        await requestNotificationPermission();
+      }
+
       const created = await remindersApi.create(formData);
       if (created) {
         await scheduleNativeReminderNotification(created);

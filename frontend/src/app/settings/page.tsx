@@ -14,7 +14,8 @@ import {
   Download,
   CheckCircle,
   ExternalLink,
-  AlertCircle 
+  AlertCircle,
+  Volume2 
 } from "lucide-react";
 import { authApi, synchronizeOfflineOperations } from "@/lib/api";
 import { 
@@ -25,7 +26,8 @@ import {
 import { 
   checkNotificationPermission, 
   requestNotificationPermission,
-  syncAllNativeReminderNotifications
+  syncAllNativeReminderNotifications,
+  scheduleTestNotification
 } from "@/lib/nativeNotifications";
 import { 
   checkForAppUpdates, 
@@ -101,6 +103,21 @@ export default function SettingsPage() {
       // Sync upcoming reminders into native alarms immediately
       const cached = await getCachedReminders();
       await syncAllNativeReminderNotifications(cached);
+    }
+  };
+
+  const handleTestSound = async () => {
+    setFeedbackMsg("");
+    const granted = await requestNotificationPermission();
+    if (!granted) {
+      setFeedbackMsg("Please enable notification permission in your phone settings.");
+      return;
+    }
+    const sent = await scheduleTestNotification();
+    if (sent) {
+      setFeedbackMsg("🔔 Test alert scheduled! Wait 3 seconds to hear the audio chime and see the heads-up banner.");
+    } else {
+      setFeedbackMsg("Could not schedule test alert.");
     }
   };
 
@@ -203,6 +220,22 @@ export default function SettingsPage() {
                   notificationsEnabled ? "translate-x-5" : "translate-x-0"
                 }`}
               />
+            </button>
+          </div>
+
+          {/* Test Sound & Alert Button */}
+          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between">
+            <div>
+              <span className="block text-xs font-semibold text-slate-700">Test Chime &amp; Banner</span>
+              <span className="text-[10px] text-slate-400">Triggers an alert 3s from now</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleTestSound}
+              className="flex items-center gap-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 active:scale-95 transition-all shadow-sm"
+            >
+              <Volume2 className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Test Alert</span>
             </button>
           </div>
         </div>

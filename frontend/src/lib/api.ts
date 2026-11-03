@@ -187,7 +187,11 @@ export const remindersApi = {
     reminder: Omit<ReminderLocal, "id" | "user_id" | "status" | "created_at">
   ): Promise<ReminderLocal> {
     const user = authApi.getCurrentUser();
-    const newId = Date.now(); // Guaranteed unique positive ID
+    
+    // Assign clean sequential safe integer ID (fits in Android 32-bit signed int)
+    const existing = await getCachedReminders();
+    const maxId = existing.reduce((max, r) => (r.id > max && r.id < 2000000000 ? r.id : max), 0);
+    const newId = maxId > 0 ? maxId + 1 : 1;
 
     const newReminder: ReminderLocal = {
       ...reminder,
