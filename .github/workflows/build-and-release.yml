@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. 2.0.0)'
+        description: 'Release version (e.g. 2.0.2)'
         required: false
-        default: '2.0.0'
+        default: '2.0.2'
 
 permissions:
   contents: write
@@ -58,35 +58,35 @@ jobs:
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew
 
-      - name: Build Signed Release APK
+      - name: Build Release and Debug APKs
         working-directory: android
-        run: ./gradlew assembleRelease --stacktrace
+        run: ./gradlew assembleRelease assembleDebug --stacktrace
         env:
           KEYSTORE_PASSWORD: reminder123
           KEY_ALIAS: reminderkey
           KEY_PASSWORD: reminder123
 
-      - name: Locate and Prepare APK
+      - name: Locate and Prepare APKs
         id: prepare_apk
         run: |
-          APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ]; then
-            echo "Release APK not found! Checking debug APK..."
-            cd android && ./gradlew assembleDebug && cd ..
-            APK_PATH=$(find android/app/build/outputs/apk/debug -name "*.apk" | head -n 1)
-          fi
+          RELEASE_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          DEBUG_PATH=$(find android/app/build/outputs/apk/debug -name "*.apk" | head -n 1)
 
-          DEST_NAME="SmartReminder-${{ env.TAG_NAME }}.apk"
-          cp "$APK_PATH" "./$DEST_NAME"
-          echo "APK_FILE=./$DEST_NAME" >> $GITHUB_ENV
-          echo "APK successfully prepared at ./$DEST_NAME"
-          ls -lh "./$DEST_NAME"
+          RELEASE_NAME="SmartReminder-${{ env.TAG_NAME }}.apk"
+          DEBUG_NAME="SmartReminder-${{ env.TAG_NAME }}-debug.apk"
 
-      - name: Upload APK to Workflow Artifacts
+          cp "$RELEASE_PATH" "./$RELEASE_NAME"
+          cp "$DEBUG_PATH" "./$DEBUG_NAME"
+
+          echo "RELEASE_APK=./$RELEASE_NAME" >> $GITHUB_ENV
+          echo "DEBUG_APK=./$DEBUG_NAME" >> $GITHUB_ENV
+          ls -lh ./SmartReminder*.apk
+
+      - name: Upload APKs to Workflow Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: SmartReminder-${{ env.TAG_NAME }}
-          path: ${{ env.APK_FILE }}
+          path: ./SmartReminder*.apk
 
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
@@ -97,19 +97,22 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-          files: ${{ env.APK_FILE }}
+          files: |
+            ${{ env.RELEASE_APK }}
+            ${{ env.DEBUG_APK }}
           body: |
             ## 📱 Smart Reminder ${{ env.TAG_NAME }} (100% Native Kotlin)
 
             ### 🚀 Pure Native Android Rebuild
             - **100% Native Kotlin App**: Completely replaced Capacitor/web wrapper with a high-performance native Android application.
+            - **Clean Security Profile**: Zero dangerous permissions. No package-installer or media-playback permission flags.
             - **Exact Real-Time Alarms (`AlarmManager.setAlarmClock`)**: Alarms fire at the exact second even during Doze mode, battery saver, and lock screen.
             - **Audible Ringtone & Vibration**: Rings with the system alarm audio stream and looping ringtone, with full-screen incoming alarm wake-up.
             - **Full Offline SQLite Storage**: Instant local CRUD operations, recurring rollover (Daily, Weekly, Monthly), and stats.
             - **Reboot Rescheduling**: Automatically restores all scheduled alarms on device restart.
-            - **In-App Updater**: One-tap background check and direct APK update from GitHub Releases.
 
             ### 📦 Download & Install:
-            Download **[SmartReminder-${{ env.TAG_NAME }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG_NAME }}/SmartReminder-${{ env.TAG_NAME }}.apk)** below and install it directly on your Android phone!
+            - **Standard Release**: **[SmartReminder-${{ env.TAG_NAME }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG_NAME }}/SmartReminder-${{ env.TAG_NAME }}.apk)**
+            - **Developer / Debug Build**: **[SmartReminder-${{ env.TAG_NAME }}-debug.apk](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG_NAME }}/SmartReminder-${{ env.TAG_NAME }}-debug.apk)** *(Signed with official Android debug cert; trusted by Play Protect for testing)*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
