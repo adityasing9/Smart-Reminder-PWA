@@ -129,58 +129,12 @@ object UpdateManager {
 
     private fun downloadAndInstallApk(context: Context, version: String, apkUrl: String) {
         try {
-            val filename = "SmartReminder-v$version.apk"
-            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-
-            val request = DownloadManager.Request(Uri.parse(apkUrl)).apply {
-                setTitle("Downloading Smart Reminder v$version")
-                setDescription("Smart Reminder update package")
-                setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, filename)
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl)).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
-
-            val downloadId = downloadManager.enqueue(request)
-            Toast.makeText(context, "Download started... You'll be prompted to install once complete.", Toast.LENGTH_LONG).show()
-
-            // Listen for download completion
-            val onComplete = object : BroadcastReceiver() {
-                override fun onReceive(ctxt: Context, intent: Intent) {
-                    val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-                    if (id == downloadId) {
-                        ctxt.unregisterReceiver(this)
-                        promptInstall(ctxt, filename)
-                    }
-                }
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.registerReceiver(
-                    onComplete,
-                    IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
-                    Context.RECEIVER_NOT_EXPORTED
-                )
-            } else {
-                context.registerReceiver(onComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
-            }
-
+            context.startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(context, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    private fun promptInstall(context: Context, filename: String) {
-        try {
-            val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), filename)
-            if (file.exists()) {
-                val apkUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                val installIntent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(apkUri, "application/vnd.android.package-archive")
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
-                }
-                context.startActivity(installIntent)
-            }
-        } catch (e: Exception) {
-            Toast.makeText(context, "Could not open installer: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Could not open download link: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 }
