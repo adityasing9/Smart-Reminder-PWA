@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#10B981</color>
+    <color name="primary_dark">#059669</color>
+    <color name="primary_light">#D1FAE5</color>
+    <color name="secondary">#3B82F6</color>
+    <color name="accent">#10B981</color>
+
+    <color name="background">#F8FAFC</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#F1F5F9</color>
+    
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="text_muted">#94A3B8</color>
+    <color name="border_light">#E2E8F0</color>
+
+    <!-- Priority Colors -->
+    <color name="priority_high">#EF4444</color>
+    <color name="priority_high_bg">#FEE2E2</color>
+    <color name="priority_medium">#F59E0B</color>
+    <color name="priority_medium_bg">#FEF3C7</color>
+    <color name="priority_low">#3B82F6</color>
+    <color name="priority_low_bg">#DBEAFE</color>
+
+    <!-- Status Colors -->
+    <color name="status_completed">#10B981</color>
+    <color name="status_pending">#F59E0B</color>
+    <color name="status_overdue">#EF4444</color>
+</resources>

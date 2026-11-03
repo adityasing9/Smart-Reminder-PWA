@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardReminder"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="6dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="@color/surface"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="1dp"
+    app:strokeColor="@color/border_light"
+    app:strokeWidth="1dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- Priority Indicator Stripe -->
+        <View
+            android:id="@+id/viewPriorityStripe"
+            android:layout_width="4dp"
+            android:layout_height="0dp"
+            android:background="@color/priority_high"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Checkbox -->
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbComplete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            app:buttonTint="@color/primary"
+            app:layout_constraintStart_toEndOf="@id/viewPriorityStripe"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/btnDelete"
+            app:layout_constraintStart_toEndOf="@id/cbComplete"
+            app:layout_constraintTop_toTopOf="@id/cbComplete"
+            tools:text="Buy groceries for the week" />
+
+        <!-- Delete Button -->
+        <ImageView
+            android:id="@+id/btnDelete"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Delete reminder"
+            android:padding="8dp"
+            android:src="@android:drawable/ic_menu_delete"
+            app:tint="@color/text_muted"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Description (Optional) -->
+        <TextView
+            android:id="@+id/tvDescription"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            app:layout_constraintEnd_toEndOf="@id/tvTitle"
+            app:layout_constraintStart_toStartOf="@id/tvTitle"
+            app:layout_constraintTop_toBottomOf="@id/tvTitle"
+            tools:text="Milk, eggs, oats, coffee, and apples." />
+
+        <!-- Meta row: Time Badge, Priority Chip, Category -->
+        <LinearLayout
+            android:id="@+id/layoutMeta"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@id/tvTitle"
+            app:layout_constraintTop_toBottomOf="@id/tvDescription">
+
+            <!-- Time Badge -->
+            <TextView
+                android:id="@+id/tvTimeBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_time"
+                android:drawableStart="@android:drawable/ic_lock_idle_alarm"
+                android:drawablePadding="4dp"
+                android:drawableTint="@color/primary_dark"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:textColor="@color/primary_dark"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="Today, 05:30 PM" />
+
+            <!-- Priority Badge -->
+            <TextView
+                android:id="@+id/tvPriorityBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_badge_priority"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="3dp"
+                android:textColor="@color/priority_high"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                tools:text="HIGH" />
+
+            <!-- Repeat Badge -->
+            <TextView
+                android:id="@+id/tvRepeatBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_badge_time"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="3dp"
+                android:textColor="@color/secondary"
+                android:textSize="10sp"
+                android:visibility="gone"
+                tools:text="Daily"
+                tools:visibility="visible" />
+
+            <!-- Category Badge -->
+            <TextView
+                android:id="@+id/tvCategoryBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp"
+                tools:text="• Work" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

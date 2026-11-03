@@ -7,16 +7,16 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. 1.0.0)'
+        description: 'Release version (e.g. 2.0.0)'
         required: false
-        default: '1.0.0'
+        default: '2.0.0'
 
 permissions:
   contents: write
 
 jobs:
   build-apk:
-    name: Build Android APK
+    name: Build Native Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -35,37 +35,18 @@ jobs:
           echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
           echo "Building version: $VERSION (tag: v$VERSION)"
 
-      - name: Setup Java 21
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install Frontend Dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Build Next.js Static Export
-        working-directory: frontend
-        run: npm run build:export
-        env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'https://smart-reminder-pwa.onrender.com' }}
-
-      - name: Sync Capacitor Android
-        working-directory: frontend
-        run: npx cap sync android
+          java-version: '17'
+          cache: 'gradle'
 
       - name: Generate Release Keystore
         run: |
+          mkdir -p android/app
           keytool -genkeypair -v \
-            -keystore frontend/android/app/release.keystore \
+            -keystore android/app/release.keystore \
             -alias reminderkey \
             -keyalg RSA \
             -keysize 2048 \
@@ -75,11 +56,11 @@ jobs:
             -dname "CN=Smart Reminder, OU=Mobile, O=SmartReminder, L=Global, S=Global, C=US"
 
       - name: Make Gradle Wrapper Executable
-        run: chmod +x frontend/android/gradlew
+        run: chmod +x android/gradlew
 
       - name: Build Signed Release APK
-        working-directory: frontend/android
-        run: ./gradlew assembleRelease
+        working-directory: android
+        run: ./gradlew assembleRelease --stacktrace
         env:
           KEYSTORE_PASSWORD: reminder123
           KEY_ALIAS: reminderkey
@@ -88,11 +69,11 @@ jobs:
       - name: Locate and Prepare APK
         id: prepare_apk
         run: |
-          APK_PATH=$(find frontend/android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           if [ -z "$APK_PATH" ]; then
             echo "Release APK not found! Checking debug APK..."
-            cd frontend/android && ./gradlew assembleDebug && cd ../..
-            APK_PATH=$(find frontend/android/app/build/outputs/apk/debug -name "*.apk" | head -n 1)
+            cd android && ./gradlew assembleDebug && cd ..
+            APK_PATH=$(find android/app/build/outputs/apk/debug -name "*.apk" | head -n 1)
           fi
 
           DEST_NAME="SmartReminder-${{ env.TAG_NAME }}.apk"
@@ -112,18 +93,21 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         with:
           tag_name: ${{ env.TAG_NAME }}
-          name: Smart Reminder ${{ env.TAG_NAME }}
+          name: Smart Reminder ${{ env.TAG_NAME }} (Native Kotlin)
           draft: false
           prerelease: false
           generate_release_notes: true
           files: ${{ env.APK_FILE }}
           body: |
-            ## 📱 Smart Reminder ${{ env.TAG_NAME }}
+            ## 📱 Smart Reminder ${{ env.TAG_NAME }} (100% Native Kotlin)
 
-            ### ✨ What's New:
-            - **Native Android App**: Full offline-first scheduling assistant.
-            - **Proper High-Priority Notifications**: Native device alarms, vibration, and heads-up notifications.
-            - **In-App Updater**: Direct check and download of new updates from within the app.
+            ### 🚀 Pure Native Android Rebuild
+            - **100% Native Kotlin App**: Completely replaced Capacitor/web wrapper with a high-performance native Android application.
+            - **Exact Real-Time Alarms (`AlarmManager.setAlarmClock`)**: Alarms fire at the exact second even during Doze mode, battery saver, and lock screen.
+            - **Audible Ringtone & Vibration**: Rings with the system alarm audio stream and looping ringtone, with full-screen incoming alarm wake-up.
+            - **Full Offline SQLite Storage**: Instant local CRUD operations, recurring rollover (Daily, Weekly, Monthly), and stats.
+            - **Reboot Rescheduling**: Automatically restores all scheduled alarms on device restart.
+            - **In-App Updater**: One-tap background check and direct APK update from GitHub Releases.
 
             ### 📦 Download & Install:
             Download **[SmartReminder-${{ env.TAG_NAME }}.apk](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG_NAME }}/SmartReminder-${{ env.TAG_NAME }}.apk)** below and install it directly on your Android phone!
