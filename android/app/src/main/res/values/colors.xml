@@ -6,6 +6,10 @@
     <color name="secondary">#3B82F6</color>
     <color name="accent">#10B981</color>
 
+    <color name="colorPrimary">#10B981</color>
+    <color name="colorPrimaryDark">#059669</color>
+    <color name="colorAccent">#10B981</color>
+
     <color name="background">#F8FAFC</color>
     <color name="surface">#FFFFFF</color>
     <color name="surface_variant">#F1F5F9</color>
