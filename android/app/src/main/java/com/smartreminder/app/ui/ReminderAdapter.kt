@@ -81,12 +81,28 @@ class ReminderAdapter(
             }
 
             // Category Badge
-            if (reminder.category.isNotBlank() && reminder.category != "General") {
-                binding.tvCategoryBadge.text = "• ${reminder.category}"
-                binding.tvCategoryBadge.visibility = View.VISIBLE
-            } else {
-                binding.tvCategoryBadge.visibility = View.GONE
+            val catEmoji = when (reminder.category) {
+                "Event" -> "📅 Event"
+                "Work" -> "💼 Work"
+                "Personal" -> "👤 Personal"
+                "Meeting" -> "🤝 Meeting"
+                "Birthday" -> "🎂 Birthday"
+                "Health" -> "💊 Health"
+                "Finance" -> "💰 Finance"
+                "Shopping" -> "🛒 Shopping"
+                "Study" -> "📚 Study"
+                else -> "📌 General"
             }
+            binding.tvCategoryBadge.text = catEmoji
+            binding.tvCategoryBadge.visibility = View.VISIBLE
+
+            // Alert Type Badge
+            if (reminder.alertType.equals("NOTIFICATION", ignoreCase = true)) {
+                binding.tvAlertBadge.text = "💬 Notify"
+            } else {
+                binding.tvAlertBadge.text = "🔔 Alarm"
+            }
+            binding.tvAlertBadge.visibility = View.VISIBLE
 
             // Repeat Badge
             if (reminder.repeatType != "NONE") {

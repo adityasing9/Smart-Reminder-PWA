@@ -20,6 +20,9 @@ object AlarmScheduler {
     const val EXTRA_REMINDER_DESC = "REMINDER_DESC"
     const val EXTRA_REMINDER_PRIORITY = "REMINDER_PRIORITY"
     const val EXTRA_REMINDER_CATEGORY = "REMINDER_CATEGORY"
+    const val EXTRA_REMINDER_SOUND_URI = "REMINDER_SOUND_URI"
+    const val EXTRA_REMINDER_SOUND_TITLE = "REMINDER_SOUND_TITLE"
+    const val EXTRA_REMINDER_ALERT_TYPE = "REMINDER_ALERT_TYPE"
 
     fun scheduleAlarm(context: Context, reminder: Reminder) {
         if (reminder.isCompleted) {
@@ -44,6 +47,9 @@ object AlarmScheduler {
             putExtra(EXTRA_REMINDER_DESC, reminder.description)
             putExtra(EXTRA_REMINDER_PRIORITY, reminder.priority)
             putExtra(EXTRA_REMINDER_CATEGORY, reminder.category)
+            putExtra(EXTRA_REMINDER_SOUND_URI, reminder.soundUri ?: "")
+            putExtra(EXTRA_REMINDER_SOUND_TITLE, reminder.soundTitle)
+            putExtra(EXTRA_REMINDER_ALERT_TYPE, reminder.alertType)
         }
 
         val requestCode = (reminder.id % 2000000000).toInt()
@@ -66,7 +72,7 @@ object AlarmScheduler {
             // Priority 1: setAlarmClock (Exempt from Doze, battery saver, and app standby)
             val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerTime, showPendingIntent)
             alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
-            Log.d(TAG, "Successfully set exact AlarmClock for reminder #${reminder.id} at $triggerTime")
+            Log.d(TAG, "Successfully set exact AlarmClock for reminder #${reminder.id} at $triggerTime (${reminder.alertType})")
         } catch (e: SecurityException) {
             Log.w(TAG, "Exact alarm permission missing, falling back to setExactAndAllowWhileIdle", e)
             try {
@@ -108,7 +114,8 @@ object AlarmScheduler {
             description = "High-priority alarm and audio chime are firing in real-time!",
             triggerTimeMillis = triggerTime,
             priority = "HIGH",
-            category = "General"
+            category = "General",
+            alertType = "ALARM"
         )
         scheduleAlarm(context, testReminder)
         Log.d(TAG, "Scheduled test alarm for $delaySeconds seconds from now.")

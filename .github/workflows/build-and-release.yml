@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. 2.0.3)'
+        description: 'Release version (e.g. 2.1.0)'
         required: false
-        default: '2.0.3'
+        default: '2.1.0'
 
 permissions:
   contents: write
@@ -62,7 +62,7 @@ jobs:
 
       - name: Build Release and Debug APKs
         working-directory: android
-        run: ./gradlew assembleRelease assembleDebug --stacktrace
+        run: ./gradlew assembleRelease assembleDebug -PversionName=${{ env.VERSION }} --stacktrace
         env:
           KEYSTORE_PASSWORD: reminder123
           KEY_ALIAS: reminderkey

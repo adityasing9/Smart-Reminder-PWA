@@ -18,11 +18,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.smartreminder.app.BuildConfig
 import com.smartreminder.app.R
 import com.smartreminder.app.data.Reminder
 import com.smartreminder.app.data.ReminderDbHelper
 import com.smartreminder.app.databinding.ActivityMainBinding
 import com.smartreminder.app.util.AlarmScheduler
+import com.smartreminder.app.util.ThemeManager
 import com.smartreminder.app.util.UpdateManager
 
 class MainActivity : AppCompatActivity() {
@@ -161,6 +163,15 @@ class MainActivity : AppCompatActivity() {
             binding.chipToday.isChecked -> db.getTodayReminders()
             binding.chipUpcoming.isChecked -> db.getUpcomingReminders()
             binding.chipHighPriority.isChecked -> allReminders.filter { it.priority.equals("HIGH", ignoreCase = true) && !it.isCompleted }
+            binding.chipFilterEvent.isChecked -> allReminders.filter { it.category.equals("Event", ignoreCase = true) }
+            binding.chipFilterWork.isChecked -> allReminders.filter { it.category.equals("Work", ignoreCase = true) }
+            binding.chipFilterPersonal.isChecked -> allReminders.filter { it.category.equals("Personal", ignoreCase = true) }
+            binding.chipFilterMeeting.isChecked -> allReminders.filter { it.category.equals("Meeting", ignoreCase = true) }
+            binding.chipFilterBirthday.isChecked -> allReminders.filter { it.category.equals("Birthday", ignoreCase = true) }
+            binding.chipFilterHealth.isChecked -> allReminders.filter { it.category.equals("Health", ignoreCase = true) }
+            binding.chipFilterFinance.isChecked -> allReminders.filter { it.category.equals("Finance", ignoreCase = true) }
+            binding.chipFilterShopping.isChecked -> allReminders.filter { it.category.equals("Shopping", ignoreCase = true) }
+            binding.chipFilterStudy.isChecked -> allReminders.filter { it.category.equals("Study", ignoreCase = true) }
             binding.chipCompleted.isChecked -> db.getCompletedReminders()
             else -> allReminders
         }
@@ -197,6 +208,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+            R.id.action_theme -> {
+                showThemeSelectionDialog()
+                true
+            }
             R.id.action_test_alarm -> {
                 AlarmScheduler.scheduleTestAlarm(this, 5)
                 Toast.makeText(this, "🔔 Test alarm scheduled! Prepare to hear the alarm ring in 5 seconds...", Toast.LENGTH_LONG).show()
@@ -223,13 +238,37 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_about -> {
                 MaterialAlertDialogBuilder(this)
-                    .setTitle("Smart Reminder v2.0.0")
-                    .setMessage("100% Native Android Kotlin Application.\n\n• Real-time AlarmManager alerts\n• High-priority heads-up notifications & ringtones\n• Works completely offline with zero servers\n• Automatic reboot alarm restoration")
+                    .setTitle("Smart Reminder v${BuildConfig.VERSION_NAME}")
+                    .setMessage("100% Native Android Kotlin Application.\n\n• Real-time AlarmManager exact alerts\n• Custom device ringtones & sounds\n• Ringing Alarms and Notification-Only alerts\n• Rich Event Categories with filtering\n• Light, Dark & System Theme support\n• 100% offline with zero server tracking\n• Automatic reboot alarm restoration")
                     .setPositiveButton("OK", null)
                     .show()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun showThemeSelectionDialog() {
+        val currentTheme = ThemeManager.getSavedTheme(this)
+        val themes = arrayOf("System Default (Follow OS)", "☀️ Light Mode", "🌙 Dark Mode")
+        val selectedIndex = when (currentTheme) {
+            ThemeManager.THEME_LIGHT -> 1
+            ThemeManager.THEME_DARK -> 2
+            else -> 0
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("🎨 Choose Theme")
+            .setSingleChoiceItems(themes, selectedIndex) { dialog, which ->
+                val chosenTheme = when (which) {
+                    1 -> ThemeManager.THEME_LIGHT
+                    2 -> ThemeManager.THEME_DARK
+                    else -> ThemeManager.THEME_SYSTEM
+                }
+                ThemeManager.setAndApplyTheme(this, chosenTheme)
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 }

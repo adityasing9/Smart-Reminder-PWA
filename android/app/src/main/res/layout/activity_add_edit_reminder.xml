@@ -91,7 +91,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="SCHEDULE ALARM"
+                android:text="SCHEDULE TIME"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp"
                 android:textStyle="bold"
@@ -109,13 +109,13 @@
                     android:id="@+id/cardDatePicker"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
+                    android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
                     app:cardBackgroundColor="@color/surface"
                     app:cardCornerRadius="14dp"
-                    app:cardElevation="0dp"
+                    app:cardElevation="1dp"
                     app:strokeColor="@color/border_light"
                     app:strokeWidth="1dp">
 
@@ -129,18 +129,18 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Date"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/tvSelectedDate"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="2dp"
                             android:textColor="@color/text_primary"
-                            android:textSize="15sp"
+                            android:textSize="14sp"
                             android:textStyle="bold"
-                            tools:text="Today, Nov 3" />
+                            tools:text="Wed, Nov 4" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -149,13 +149,13 @@
                     android:id="@+id/cardTimePicker"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
+                    android:layout_marginStart="8dp"
                     android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true"
                     app:cardBackgroundColor="@color/surface"
                     app:cardCornerRadius="14dp"
-                    app:cardElevation="0dp"
+                    app:cardElevation="1dp"
                     app:strokeColor="@color/border_light"
                     app:strokeWidth="1dp">
 
@@ -168,28 +168,28 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Alarm Time"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
+                            android:text="Time"
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/tvSelectedTime"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="2dp"
                             android:textColor="@color/primary_dark"
-                            android:textSize="15sp"
+                            android:textSize="14sp"
                             android:textStyle="bold"
-                            tools:text="06:00 PM" />
+                            tools:text="09:00 AM" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
-            <!-- Quick Shortcut Chips -->
+            <!-- Quick Time Shortcuts -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="12dp"
                 android:scrollbars="none">
 
                 <LinearLayout
@@ -234,11 +234,131 @@
                 </LinearLayout>
             </HorizontalScrollView>
 
-            <!-- Section: Priority -->
+            <!-- Section: Alert Style (Alarm vs Notification Only) -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
+                android:text="ALERT TYPE"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupAlertType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAlertAlarm"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="🔔 Ringing Alarm (Full Alert)" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAlertNotification"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💬 Notification Only (Chime)" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <!-- Section: Choose Sound from Device -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="ALERT SOUND"
+                android:textColor="@color/text_muted"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardSoundPicker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/border_light"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@android:drawable/ic_lock_idle_alarm"
+                        app:tint="@color/primary" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Ringtone / Sound"
+                            android:textColor="@color/text_muted"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tvSoundTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="Default Alarm Sound"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Preview Sound Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPreviewSound"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:contentDescription="Preview Sound"
+                        app:icon="@android:drawable/ic_media_play"
+                        app:iconTint="@color/primary" />
+
+                    <!-- Change Sound Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnChangeSound"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="Choose"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Section: Priority -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
                 android:text="PRIORITY LEVEL"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp"
@@ -323,12 +443,12 @@
                     android:text="🔁 Monthly" />
             </com.google.android.material.chip.ChipGroup>
 
-            <!-- Section: Category -->
+            <!-- Section: Event Categories -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="CATEGORY"
+                android:text="EVENT CATEGORY"
                 android:textColor="@color/text_muted"
                 android:textSize="12sp"
                 android:textStyle="bold"
@@ -347,35 +467,70 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
-                    android:text="General" />
+                    android:text="📌 General" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCatEvent"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📅 Event" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipCatWork"
                     style="@style/Widget.Material3.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Work" />
+                    android:text="💼 Work" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipCatPersonal"
                     style="@style/Widget.Material3.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Personal" />
+                    android:text="👤 Personal" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCatMeeting"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🤝 Meeting" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCatBirthday"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎂 Birthday" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipCatHealth"
                     style="@style/Widget.Material3.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Health" />
+                    android:text="💊 Health" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipCatFinance"
                     style="@style/Widget.Material3.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Finance" />
+                    android:text="💰 Finance" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCatShopping"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🛒 Shopping" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCatStudy"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📚 Study" />
             </com.google.android.material.chip.ChipGroup>
 
             <!-- Submit Button -->
@@ -385,7 +540,7 @@
                 android:layout_height="58dp"
                 android:layout_marginTop="32dp"
                 android:backgroundTint="@color/primary"
-                android:text="SAVE &amp; SET ALARM"
+                android:text="SAVE &amp; SET REMINDER"
                 android:textColor="@color/surface"
                 android:textSize="15sp"
                 android:textStyle="bold"

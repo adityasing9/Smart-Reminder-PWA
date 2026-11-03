@@ -1,5 +1,6 @@
 package com.smartreminder.app.receiver
 
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -14,17 +15,32 @@ class AlarmActionReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_DISMISS = "com.smartreminder.app.ACTION_DISMISS"
         const val ACTION_SNOOZE = "com.smartreminder.app.ACTION_SNOOZE"
+
+        const val EXTRA_REMINDER_ID = "EXTRA_REMINDER_ID"
+        const val EXTRA_TITLE = "EXTRA_TITLE"
+        const val EXTRA_DESC = "EXTRA_DESC"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val reminderId = intent.getLongExtra(AlarmScheduler.EXTRA_REMINDER_ID, -1L)
-        val title = intent.getStringExtra(AlarmScheduler.EXTRA_REMINDER_TITLE) ?: "Reminder"
-        val desc = intent.getStringExtra(AlarmScheduler.EXTRA_REMINDER_DESC) ?: ""
+        val reminderId = intent.getLongExtra(EXTRA_REMINDER_ID,
+            intent.getLongExtra(AlarmScheduler.EXTRA_REMINDER_ID, -1L)
+        )
+        val title = intent.getStringExtra(EXTRA_TITLE)
+            ?: intent.getStringExtra(AlarmScheduler.EXTRA_REMINDER_TITLE)
+            ?: "Reminder"
+        val desc = intent.getStringExtra(EXTRA_DESC)
+            ?: intent.getStringExtra(AlarmScheduler.EXTRA_REMINDER_DESC)
+            ?: ""
 
         Log.d("AlarmActionReceiver", "Action received: ${intent.action} for reminder #$reminderId")
 
-        // 1. Immediately stop ringing and vibration
+        // 1. Immediately stop ringing and vibration if running
         AlarmSoundService.stopAlarm(context)
+
+        // 2. Clear notification
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notifId = (reminderId % 2000000000).toInt() + 5000
+        notificationManager.cancel(notifId)
 
         when (intent.action) {
             ACTION_DISMISS -> {

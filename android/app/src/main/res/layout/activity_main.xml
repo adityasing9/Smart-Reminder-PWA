@@ -187,14 +187,77 @@
                     style="@style/Widget.Material3.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🚨 High Priority" />
+                    android:text="🚨 High" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFilterEvent"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📅 Events" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFilterWork"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💼 Work" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFilterPersonal"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="👤 Personal" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFilterMeeting"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🤝 Meetings" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFilterBirthday"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎂 Birthdays" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFilterHealth"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💊 Health" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFilterFinance"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💰 Finance" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFilterShopping"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🛒 Shopping" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFilterStudy"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📚 Study" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipCompleted"
                     style="@style/Widget.Material3.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Completed" />
+                    android:text="Done" />
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
     </com.google.android.material.appbar.AppBarLayout>

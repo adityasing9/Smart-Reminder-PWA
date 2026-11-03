@@ -35,8 +35,17 @@ class AlarmSoundService : Service() {
         const val EXTRA_DESC = "EXTRA_DESC"
         const val EXTRA_PRIORITY = "EXTRA_PRIORITY"
         const val EXTRA_CATEGORY = "EXTRA_CATEGORY"
+        const val EXTRA_SOUND_URI = "EXTRA_SOUND_URI"
 
-        fun startAlarm(context: Context, id: Long, title: String, desc: String, priority: String, category: String) {
+        fun startAlarm(
+            context: Context,
+            id: Long,
+            title: String,
+            desc: String,
+            priority: String,
+            category: String,
+            soundUri: String? = null
+        ) {
             val intent = Intent(context, AlarmSoundService::class.java).apply {
                 action = ACTION_START_ALARM
                 putExtra(EXTRA_REMINDER_ID, id)
@@ -44,6 +53,7 @@ class AlarmSoundService : Service() {
                 putExtra(EXTRA_DESC, desc)
                 putExtra(EXTRA_PRIORITY, priority)
                 putExtra(EXTRA_CATEGORY, category)
+                putExtra(EXTRA_SOUND_URI, soundUri)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
@@ -76,8 +86,9 @@ class AlarmSoundService : Service() {
             val title = intent.getStringExtra(EXTRA_TITLE) ?: "Reminder Alert!"
             val desc = intent.getStringExtra(EXTRA_DESC) ?: "It's time for your scheduled reminder."
             val priority = intent.getStringExtra(EXTRA_PRIORITY) ?: "MEDIUM"
+            val soundUri = intent.getStringExtra(EXTRA_SOUND_URI)
 
-            startRingingAndVibration()
+            startRingingAndVibration(soundUri)
             val notification = buildAlarmNotification(reminderId, title, desc, priority)
             startForeground(NOTIFICATION_ID, notification)
         }
@@ -85,20 +96,34 @@ class AlarmSoundService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun startRingingAndVibration() {
+    private fun startRingingAndVibration(soundUri: String?) {
         // 1. Play Alarm Audio via MediaPlayer with USAGE_ALARM
         try {
-            var alertUri: Uri? = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            if (alertUri == null) {
-                alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+            var alertUri: Uri? = null
+            if (!soundUri.isNullOrBlank()) {
+                try {
+                    alertUri = Uri.parse(soundUri)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Could not parse custom sound URI: $soundUri", e)
+                }
             }
+
             if (alertUri == null) {
-                alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             }
 
             mediaPlayer?.release()
             mediaPlayer = MediaPlayer().apply {
-                setDataSource(applicationContext, alertUri!!)
+                try {
+                    setDataSource(applicationContext, alertUri!!)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to load custom sound URI, falling back to default alarm", e)
+                    val fallbackUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                    setDataSource(applicationContext, fallbackUri)
+                }
                 setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_ALARM)
@@ -113,7 +138,7 @@ class AlarmSoundService : Service() {
             Log.e(TAG, "Failed to start alarm audio playback", e)
         }
 
-        // 2. Vibration
+        // 2. Continuous Vibration
         try {
             vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager

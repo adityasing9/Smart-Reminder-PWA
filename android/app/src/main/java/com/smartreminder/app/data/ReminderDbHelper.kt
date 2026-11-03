@@ -5,13 +5,14 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 import java.util.Calendar
 
 class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
         const val DATABASE_NAME = "smart_reminders.db"
-        const val DATABASE_VERSION = 1
+        const val DATABASE_VERSION = 2
 
         const val TABLE_REMINDERS = "reminders"
         const val COL_ID = "id"
@@ -22,6 +23,9 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
         const val COL_PRIORITY = "priority"
         const val COL_CATEGORY = "category"
         const val COL_REPEAT_TYPE = "repeat_type"
+        const val COL_SOUND_URI = "sound_uri"
+        const val COL_SOUND_TITLE = "sound_title"
+        const val COL_ALERT_TYPE = "alert_type"
         const val COL_CREATED_AT = "created_at"
 
         @Volatile
@@ -45,6 +49,9 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
                 $COL_PRIORITY TEXT DEFAULT 'MEDIUM',
                 $COL_CATEGORY TEXT DEFAULT 'General',
                 $COL_REPEAT_TYPE TEXT DEFAULT 'NONE',
+                $COL_SOUND_URI TEXT DEFAULT '',
+                $COL_SOUND_TITLE TEXT DEFAULT 'Default Alarm Sound',
+                $COL_ALERT_TYPE TEXT DEFAULT 'ALARM',
                 $COL_CREATED_AT INTEGER NOT NULL
             )
         """.trimIndent()
@@ -52,8 +59,15 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS $TABLE_REMINDERS")
-        onCreate(db)
+        if (oldVersion < 2) {
+            try {
+                db.execSQL("ALTER TABLE $TABLE_REMINDERS ADD COLUMN $COL_SOUND_URI TEXT DEFAULT ''")
+                db.execSQL("ALTER TABLE $TABLE_REMINDERS ADD COLUMN $COL_SOUND_TITLE TEXT DEFAULT 'Default Alarm Sound'")
+                db.execSQL("ALTER TABLE $TABLE_REMINDERS ADD COLUMN $COL_ALERT_TYPE TEXT DEFAULT 'ALARM'")
+            } catch (e: Exception) {
+                Log.e("ReminderDbHelper", "Error during DB migration to v2", e)
+            }
+        }
     }
 
     fun insertReminder(reminder: Reminder): Long {
@@ -66,6 +80,9 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
             put(COL_PRIORITY, reminder.priority)
             put(COL_CATEGORY, reminder.category)
             put(COL_REPEAT_TYPE, reminder.repeatType)
+            put(COL_SOUND_URI, reminder.soundUri ?: "")
+            put(COL_SOUND_TITLE, reminder.soundTitle)
+            put(COL_ALERT_TYPE, reminder.alertType)
             put(COL_CREATED_AT, reminder.createdAt)
         }
         return db.insert(TABLE_REMINDERS, null, values)
@@ -81,6 +98,9 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
             put(COL_PRIORITY, reminder.priority)
             put(COL_CATEGORY, reminder.category)
             put(COL_REPEAT_TYPE, reminder.repeatType)
+            put(COL_SOUND_URI, reminder.soundUri ?: "")
+            put(COL_SOUND_TITLE, reminder.soundTitle)
+            put(COL_ALERT_TYPE, reminder.alertType)
         }
         return db.update(TABLE_REMINDERS, values, "$COL_ID = ?", arrayOf(reminder.id.toString()))
     }
@@ -212,6 +232,14 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
     }
 
     private fun parseCursor(cursor: Cursor): Reminder {
+        val soundUriIdx = cursor.getColumnIndex(COL_SOUND_URI)
+        val soundTitleIdx = cursor.getColumnIndex(COL_SOUND_TITLE)
+        val alertTypeIdx = cursor.getColumnIndex(COL_ALERT_TYPE)
+
+        val soundUri = if (soundUriIdx != -1) cursor.getString(soundUriIdx).takeIf { !it.isNullOrBlank() } else null
+        val soundTitle = if (soundTitleIdx != -1) cursor.getString(soundTitleIdx) ?: "Default Alarm Sound" else "Default Alarm Sound"
+        val alertType = if (alertTypeIdx != -1) cursor.getString(alertTypeIdx) ?: "ALARM" else "ALARM"
+
         return Reminder(
             id = cursor.getLong(cursor.getColumnIndexOrThrow(COL_ID)),
             title = cursor.getString(cursor.getColumnIndexOrThrow(COL_TITLE)),
@@ -221,6 +249,9 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
             priority = cursor.getString(cursor.getColumnIndexOrThrow(COL_PRIORITY)) ?: "MEDIUM",
             category = cursor.getString(cursor.getColumnIndexOrThrow(COL_CATEGORY)) ?: "General",
             repeatType = cursor.getString(cursor.getColumnIndexOrThrow(COL_REPEAT_TYPE)) ?: "NONE",
+            soundUri = soundUri,
+            soundTitle = soundTitle,
+            alertType = alertType,
             createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(COL_CREATED_AT))
         )
     }

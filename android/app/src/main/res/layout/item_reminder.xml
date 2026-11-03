@@ -146,9 +146,26 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
+                android:background="@drawable/bg_badge_category"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="3dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                tools:text="💼 Work" />
+
+            <!-- Alert Type Badge -->
+            <TextView
+                android:id="@+id/tvAlertBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_badge_category"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="3dp"
                 android:textColor="@color/text_muted"
-                android:textSize="11sp"
-                tools:text="• Work" />
+                android:textSize="10sp"
+                tools:text="💬 Notify" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
