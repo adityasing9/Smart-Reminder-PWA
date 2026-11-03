@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. 2.0.2)'
+        description: 'Release version (e.g. 2.0.3)'
         required: false
-        default: '2.0.2'
+        default: '2.0.3'
 
 permissions:
   contents: write
@@ -42,18 +42,20 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Generate Release Keystore
+      - name: Ensure Release Keystore
         run: |
           mkdir -p android/app
-          keytool -genkeypair -v \
-            -keystore android/app/release.keystore \
-            -alias reminderkey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass reminder123 \
-            -keypass reminder123 \
-            -dname "CN=Smart Reminder, OU=Mobile, O=SmartReminder, L=Global, S=Global, C=US"
+          if [ ! -f android/app/release.keystore ]; then
+            keytool -genkeypair -v \
+              -keystore android/app/release.keystore \
+              -alias reminderkey \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass reminder123 \
+              -keypass reminder123 \
+              -dname "CN=Smart Reminder, OU=Mobile, O=SmartReminder, L=Global, S=Global, C=US"
+          fi
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x android/gradlew

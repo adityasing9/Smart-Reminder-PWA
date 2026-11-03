@@ -1,24 +1,17 @@
 package com.smartreminder.app.util
 
-import android.app.DownloadManager
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.net.Uri
-import android.os.Build
-import android.os.Environment
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
-import androidx.core.content.FileProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.smartreminder.app.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedReader
-import java.io.File
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -46,7 +39,8 @@ object UpdateManager {
                     reader.close()
 
                     val json = JSONObject(response)
-                    val tagName = json.optString("tag_name", "").replace("v", "").trim()
+                    val rawTag = json.optString("tag_name", "").trim()
+                    val tagName = rawTag.replace("v", "").trim()
                     val releaseName = json.optString("name", "New Update")
                     val releaseBody = json.optString("body", "Bug fixes and improvements.")
 
@@ -56,20 +50,26 @@ object UpdateManager {
                         for (i in 0 until assets.length()) {
                             val asset = assets.getJSONObject(i)
                             val name = asset.optString("name", "")
+                            // Prefer debug build if running a debug build or first apk found
                             if (name.endsWith(".apk", ignoreCase = true)) {
                                 apkDownloadUrl = asset.optString("browser_download_url", "")
-                                break
+                                if (BuildConfig.DEBUG && name.contains("debug", ignoreCase = true)) {
+                                    break
+                                } else if (!BuildConfig.DEBUG && !name.contains("debug", ignoreCase = true)) {
+                                    break
+                                }
                             }
                         }
                     }
 
-                    val currentVersion = getCurrentVersion(context)
+                    val currentVersion = getCurrentVersion()
 
                     withContext(Dispatchers.Main) {
-                        if (isNewerVersion(tagName, currentVersion) && apkDownloadUrl.isNotBlank()) {
+                        val hasUpdate = isNewerVersion(tagName, currentVersion)
+                        if (hasUpdate && apkDownloadUrl.isNotBlank()) {
                             showUpdateDialog(context, tagName, releaseName, releaseBody, apkDownloadUrl)
                         } else if (isManualCheck) {
-                            Toast.makeText(context, "You're using the latest version (v$currentVersion)", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Smart Reminder is up to date! (v$currentVersion)", Toast.LENGTH_SHORT).show()
                         }
                     }
                 } else if (isManualCheck) {
@@ -87,18 +87,20 @@ object UpdateManager {
         }
     }
 
-    private fun getCurrentVersion(context: Context): String {
-        return try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.versionName ?: "2.0.0"
-        } catch (e: Exception) {
-            "2.0.0"
-        }
+    private fun getCurrentVersion(): String {
+        return BuildConfig.VERSION_NAME
     }
 
-    private fun isNewerVersion(remote: String, current: String): Boolean {
-        val rParts = remote.split(".").map { it.toIntOrNull() ?: 0 }
-        val cParts = current.split(".").map { it.toIntOrNull() ?: 0 }
+    fun isNewerVersion(remoteTag: String, currentVer: String): Boolean {
+        val cleanRemote = remoteTag.replace(Regex("[^0-9.]"), "").trim()
+        val cleanCurrent = currentVer.replace(Regex("[^0-9.]"), "").trim()
+
+        if (cleanRemote.isEmpty() || cleanRemote == cleanCurrent) {
+            return false
+        }
+
+        val rParts = cleanRemote.split(".").filter { it.isNotEmpty() }.map { it.toIntOrNull() ?: 0 }
+        val cParts = cleanCurrent.split(".").filter { it.isNotEmpty() }.map { it.toIntOrNull() ?: 0 }
         val maxLen = maxOf(rParts.size, cParts.size)
 
         for (i in 0 until maxLen) {
@@ -121,13 +123,13 @@ object UpdateManager {
             .setTitle("🚀 Update Available (v$newVersion)")
             .setMessage("$name\n\n$notes")
             .setPositiveButton("Download & Install") { _, _ ->
-                downloadAndInstallApk(context, newVersion, apkUrl)
+                downloadAndInstallApk(context, apkUrl)
             }
             .setNegativeButton("Later", null)
             .show()
     }
 
-    private fun downloadAndInstallApk(context: Context, version: String, apkUrl: String) {
+    private fun downloadAndInstallApk(context: Context, apkUrl: String) {
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl)).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK

@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application
         android:name=".ReminderApplication"
@@ -81,7 +82,8 @@
         <!-- Foreground Service for Continuous Alarm Sound & Vibration -->
         <service
             android:name=".service.AlarmSoundService"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <!-- FileProvider for APK In-App Updates -->
         <provider
