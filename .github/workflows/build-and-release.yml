@@ -35,11 +35,11 @@ jobs:
           echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
           echo "Building version: $VERSION (tag: v$VERSION)"
 
-      - name: Setup Java 17
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
