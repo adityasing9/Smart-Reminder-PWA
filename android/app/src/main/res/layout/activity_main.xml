@@ -36,10 +36,13 @@
 
             <!-- Today Stat -->
             <LinearLayout
+                android:id="@+id/cardStatToday"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@drawable/bg_stat_card"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:padding="8dp">
@@ -63,11 +66,14 @@
 
             <!-- Upcoming Stat -->
             <LinearLayout
+                android:id="@+id/cardStatUpcoming"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_stat_card"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:padding="8dp">
@@ -91,11 +97,14 @@
 
             <!-- High Priority Stat -->
             <LinearLayout
+                android:id="@+id/cardStatHigh"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_stat_card"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:padding="8dp">
@@ -119,11 +128,14 @@
 
             <!-- Completed Stat -->
             <LinearLayout
+                android:id="@+id/cardStatCompleted"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_stat_card"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center"
                 android:orientation="vertical"
                 android:padding="8dp">
@@ -174,6 +186,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Today" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipTomorrow"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tomorrow" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipUpcoming"
@@ -299,6 +318,7 @@
                     app:tint="@color/text_muted" />
 
                 <TextView
+                    android:id="@+id/tvEmptyTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
@@ -308,6 +328,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tvEmptySubtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"

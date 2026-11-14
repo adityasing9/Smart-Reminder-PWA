@@ -105,8 +105,9 @@ class ReminderAdapter(
             binding.tvAlertBadge.visibility = View.VISIBLE
 
             // Repeat Badge
-            if (reminder.repeatType != "NONE") {
-                binding.tvRepeatBadge.text = "🔁 ${reminder.repeatType.lowercase().capitalize(Locale.getDefault())}"
+            val repeatText = reminder.getRepeatDisplay()
+            if (repeatText.isNotBlank()) {
+                binding.tvRepeatBadge.text = "🔁 $repeatText"
                 binding.tvRepeatBadge.visibility = View.VISIBLE
             } else {
                 binding.tvRepeatBadge.visibility = View.GONE

@@ -10,6 +10,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -74,6 +75,7 @@ class AddEditReminderActivity : AppCompatActivity() {
         setupDateTimePickers()
         setupShortcuts()
         setupSoundPicker()
+        setupCustomDays()
         setupListeners()
 
         if (isEditMode) {
@@ -131,6 +133,15 @@ class AddEditReminderActivity : AppCompatActivity() {
                 calendar.set(Calendar.MINUTE, selectedMinute)
                 calendar.set(Calendar.SECOND, 0)
                 calendar.set(Calendar.MILLISECOND, 0)
+
+                // If Custom Days are checked, adjust day to next occurrence
+                if (binding.chipRepeatCustom.isChecked) {
+                    val days = getSelectedDays()
+                    if (days.isNotEmpty()) {
+                        adjustCalendarToNextCustomDay(days)
+                        return@TimePickerDialog
+                    }
+                }
                 updateDateTimeDisplay()
             }, hour, minute, false).show()
         }
@@ -196,6 +207,130 @@ class AddEditReminderActivity : AppCompatActivity() {
                 startSoundPreview()
             }
         }
+    }
+
+    private fun setupCustomDays() {
+        binding.chipGroupRepeat.setOnCheckedStateChangeListener { _, checkedIds ->
+            if (checkedIds.contains(R.id.chipRepeatCustom)) {
+                binding.layoutCustomDays.visibility = View.VISIBLE
+                if (getSelectedDays().isEmpty()) {
+                    setDaysChecked(setOf(Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY, Calendar.THURSDAY, Calendar.FRIDAY))
+                }
+                updateCustomDaysSummary()
+            } else {
+                binding.layoutCustomDays.visibility = View.GONE
+            }
+        }
+
+        val dayCheckListener = { _: Any?, _: Boolean ->
+            updateCustomDaysSummary()
+        }
+
+        binding.chipDayMon.setOnCheckedChangeListener(dayCheckListener)
+        binding.chipDayTue.setOnCheckedChangeListener(dayCheckListener)
+        binding.chipDayWed.setOnCheckedChangeListener(dayCheckListener)
+        binding.chipDayThu.setOnCheckedChangeListener(dayCheckListener)
+        binding.chipDayFri.setOnCheckedChangeListener(dayCheckListener)
+        binding.chipDaySat.setOnCheckedChangeListener(dayCheckListener)
+        binding.chipDaySun.setOnCheckedChangeListener(dayCheckListener)
+
+        binding.btnPresetWeekdays.setOnClickListener {
+            setDaysChecked(setOf(Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY, Calendar.THURSDAY, Calendar.FRIDAY))
+            updateCustomDaysSummary()
+        }
+
+        binding.btnPresetWeekends.setOnClickListener {
+            setDaysChecked(setOf(Calendar.SATURDAY, Calendar.SUNDAY))
+            updateCustomDaysSummary()
+        }
+
+        binding.btnPresetAllDays.setOnClickListener {
+            setDaysChecked(setOf(Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY, Calendar.THURSDAY, Calendar.FRIDAY, Calendar.SATURDAY, Calendar.SUNDAY))
+            updateCustomDaysSummary()
+        }
+    }
+
+    private fun getSelectedDays(): Set<Int> {
+        val days = mutableSetOf<Int>()
+        if (binding.chipDayMon.isChecked) days.add(Calendar.MONDAY)
+        if (binding.chipDayTue.isChecked) days.add(Calendar.TUESDAY)
+        if (binding.chipDayWed.isChecked) days.add(Calendar.WEDNESDAY)
+        if (binding.chipDayThu.isChecked) days.add(Calendar.THURSDAY)
+        if (binding.chipDayFri.isChecked) days.add(Calendar.FRIDAY)
+        if (binding.chipDaySat.isChecked) days.add(Calendar.SATURDAY)
+        if (binding.chipDaySun.isChecked) days.add(Calendar.SUNDAY)
+        return days
+    }
+
+    private fun setDaysChecked(days: Set<Int>) {
+        binding.chipDayMon.isChecked = days.contains(Calendar.MONDAY)
+        binding.chipDayTue.isChecked = days.contains(Calendar.TUESDAY)
+        binding.chipDayWed.isChecked = days.contains(Calendar.WEDNESDAY)
+        binding.chipDayThu.isChecked = days.contains(Calendar.THURSDAY)
+        binding.chipDayFri.isChecked = days.contains(Calendar.FRIDAY)
+        binding.chipDaySat.isChecked = days.contains(Calendar.SATURDAY)
+        binding.chipDaySun.isChecked = days.contains(Calendar.SUNDAY)
+    }
+
+    private fun updateCustomDaysSummary() {
+        val days = getSelectedDays()
+        if (days.isEmpty()) {
+            binding.tvCustomDaysSummary.text = "⚠️ Select at least one day"
+            return
+        }
+
+        val dayNames = listOf(
+            Calendar.MONDAY to "Mon",
+            Calendar.TUESDAY to "Tue",
+            Calendar.WEDNESDAY to "Wed",
+            Calendar.THURSDAY to "Thu",
+            Calendar.FRIDAY to "Fri",
+            Calendar.SATURDAY to "Sat",
+            Calendar.SUNDAY to "Sun"
+        )
+        val text = if (days.size == 7) {
+            "Repeats every day"
+        } else if (days == setOf(Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY, Calendar.THURSDAY, Calendar.FRIDAY)) {
+            "Repeats on Weekdays (Mon-Fri)"
+        } else if (days == setOf(Calendar.SATURDAY, Calendar.SUNDAY)) {
+            "Repeats on Weekends (Sat-Sun)"
+        } else {
+            "Repeats on: " + dayNames.filter { days.contains(it.first) }.joinToString(", ") { it.second }
+        }
+        binding.tvCustomDaysSummary.text = text
+
+        adjustCalendarToNextCustomDay(days)
+    }
+
+    private fun adjustCalendarToNextCustomDay(days: Set<Int>) {
+        if (days.isEmpty()) return
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+
+        val nextTime = calculateNextCustomOccurrence(hour, minute, days)
+        calendar.timeInMillis = nextTime
+        updateDateTimeDisplay()
+    }
+
+    private fun calculateNextCustomOccurrence(hour: Int, minute: Int, days: Set<Int>): Long {
+        val testCal = Calendar.getInstance()
+        testCal.set(Calendar.HOUR_OF_DAY, hour)
+        testCal.set(Calendar.MINUTE, minute)
+        testCal.set(Calendar.SECOND, 0)
+        testCal.set(Calendar.MILLISECOND, 0)
+
+        val now = System.currentTimeMillis()
+        if (days.contains(testCal.get(Calendar.DAY_OF_WEEK)) && testCal.timeInMillis > now) {
+            return testCal.timeInMillis
+        }
+
+        for (i in 1..7) {
+            testCal.add(Calendar.DAY_OF_YEAR, 1)
+            if (days.contains(testCal.get(Calendar.DAY_OF_WEEK))) {
+                return testCal.timeInMillis
+            }
+        }
+        return testCal.timeInMillis
     }
 
     private fun startSoundPreview() {
@@ -279,6 +414,12 @@ class AddEditReminderActivity : AppCompatActivity() {
             "DAILY" -> binding.chipRepeatDaily.isChecked = true
             "WEEKLY" -> binding.chipRepeatWeekly.isChecked = true
             "MONTHLY" -> binding.chipRepeatMonthly.isChecked = true
+            "CUSTOM" -> {
+                binding.chipRepeatCustom.isChecked = true
+                binding.layoutCustomDays.visibility = View.VISIBLE
+                setDaysChecked(reminder.getCustomDaysSet())
+                updateCustomDaysSummary()
+            }
             else -> binding.chipRepeatNone.isChecked = true
         }
 
@@ -309,10 +450,35 @@ class AddEditReminderActivity : AppCompatActivity() {
         }
         binding.tilTitle.error = null
 
-        val triggerTime = calendar.timeInMillis
-        val now = System.currentTimeMillis()
+        // Determine Repeat & Custom Days
+        val selectedDays = getSelectedDays()
+        val repeatType = when {
+            binding.chipRepeatDaily.isChecked -> "DAILY"
+            binding.chipRepeatWeekly.isChecked -> "WEEKLY"
+            binding.chipRepeatMonthly.isChecked -> "MONTHLY"
+            binding.chipRepeatCustom.isChecked -> "CUSTOM"
+            else -> "NONE"
+        }
 
-        if (triggerTime <= now) {
+        if (repeatType == "CUSTOM" && selectedDays.isEmpty()) {
+            Toast.makeText(this, "Please select at least one day for custom repeat", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val customDaysStr = if (repeatType == "CUSTOM") selectedDays.joinToString(",") else ""
+
+        val finalTriggerTime = if (repeatType == "CUSTOM") {
+            calculateNextCustomOccurrence(
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE),
+                selectedDays
+            )
+        } else {
+            calendar.timeInMillis
+        }
+
+        val now = System.currentTimeMillis()
+        if (finalTriggerTime <= now) {
             Toast.makeText(this, "Please select a future date and time for the alarm", Toast.LENGTH_LONG).show()
             return
         }
@@ -341,14 +507,6 @@ class AddEditReminderActivity : AppCompatActivity() {
             else -> "General"
         }
 
-        // Determine Repeat
-        val repeatType = when {
-            binding.chipRepeatDaily.isChecked -> "DAILY"
-            binding.chipRepeatWeekly.isChecked -> "WEEKLY"
-            binding.chipRepeatMonthly.isChecked -> "MONTHLY"
-            else -> "NONE"
-        }
-
         val db = ReminderDbHelper.getInstance(this)
 
         if (isEditMode) {
@@ -356,11 +514,12 @@ class AddEditReminderActivity : AppCompatActivity() {
                 id = reminderId,
                 title = title,
                 description = description,
-                triggerTimeMillis = triggerTime,
+                triggerTimeMillis = finalTriggerTime,
                 isCompleted = false,
                 priority = priority,
                 category = category,
                 repeatType = repeatType,
+                customDays = customDaysStr,
                 soundUri = selectedSoundUri,
                 soundTitle = selectedSoundTitle,
                 alertType = alertType
@@ -372,11 +531,12 @@ class AddEditReminderActivity : AppCompatActivity() {
             val newReminder = Reminder(
                 title = title,
                 description = description,
-                triggerTimeMillis = triggerTime,
+                triggerTimeMillis = finalTriggerTime,
                 isCompleted = false,
                 priority = priority,
                 category = category,
                 repeatType = repeatType,
+                customDays = customDaysStr,
                 soundUri = selectedSoundUri,
                 soundTitle = selectedSoundTitle,
                 alertType = alertType

@@ -141,6 +141,26 @@ class MainActivity : AppCompatActivity() {
         binding.chipGroupFilters.setOnCheckedStateChangeListener { _, _ ->
             loadReminders()
         }
+
+        binding.cardStatToday.setOnClickListener {
+            binding.chipToday.isChecked = true
+            loadReminders()
+        }
+
+        binding.cardStatUpcoming.setOnClickListener {
+            binding.chipUpcoming.isChecked = true
+            loadReminders()
+        }
+
+        binding.cardStatHigh.setOnClickListener {
+            binding.chipHighPriority.isChecked = true
+            loadReminders()
+        }
+
+        binding.cardStatCompleted.setOnClickListener {
+            binding.chipCompleted.isChecked = true
+            loadReminders()
+        }
     }
 
     private fun loadReminders() {
@@ -161,6 +181,7 @@ class MainActivity : AppCompatActivity() {
         // Filter Reminders based on Selected Chip
         val filtered = when {
             binding.chipToday.isChecked -> db.getTodayReminders()
+            binding.chipTomorrow.isChecked -> db.getTomorrowReminders()
             binding.chipUpcoming.isChecked -> db.getUpcomingReminders()
             binding.chipHighPriority.isChecked -> allReminders.filter { it.priority.equals("HIGH", ignoreCase = true) && !it.isCompleted }
             binding.chipFilterEvent.isChecked -> allReminders.filter { it.category.equals("Event", ignoreCase = true) }
@@ -179,6 +200,24 @@ class MainActivity : AppCompatActivity() {
         adapter.submitList(filtered)
 
         if (filtered.isEmpty()) {
+            when {
+                binding.chipTomorrow.isChecked -> {
+                    binding.tvEmptyTitle.text = "No tasks for tomorrow 🎉"
+                    binding.tvEmptySubtitle.text = "You're all clear for tomorrow! Tap + below to schedule ahead."
+                }
+                binding.chipToday.isChecked -> {
+                    binding.tvEmptyTitle.text = "No tasks for today 🎉"
+                    binding.tvEmptySubtitle.text = "You're all caught up for today! Tap + below to add a reminder."
+                }
+                binding.chipCompleted.isChecked -> {
+                    binding.tvEmptyTitle.text = "No completed tasks yet"
+                    binding.tvEmptySubtitle.text = "Tasks you complete will be archived here."
+                }
+                else -> {
+                    binding.tvEmptyTitle.text = "No reminders found"
+                    binding.tvEmptySubtitle.text = "Tap the + button below to create your first scheduled alarm."
+                }
+            }
             binding.layoutEmpty.visibility = View.VISIBLE
             binding.recyclerViewReminders.visibility = View.GONE
         } else {

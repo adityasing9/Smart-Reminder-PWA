@@ -12,7 +12,7 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
 
     companion object {
         const val DATABASE_NAME = "smart_reminders.db"
-        const val DATABASE_VERSION = 2
+        const val DATABASE_VERSION = 3
 
         const val TABLE_REMINDERS = "reminders"
         const val COL_ID = "id"
@@ -23,6 +23,7 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
         const val COL_PRIORITY = "priority"
         const val COL_CATEGORY = "category"
         const val COL_REPEAT_TYPE = "repeat_type"
+        const val COL_CUSTOM_DAYS = "custom_days"
         const val COL_SOUND_URI = "sound_uri"
         const val COL_SOUND_TITLE = "sound_title"
         const val COL_ALERT_TYPE = "alert_type"
@@ -49,6 +50,7 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
                 $COL_PRIORITY TEXT DEFAULT 'MEDIUM',
                 $COL_CATEGORY TEXT DEFAULT 'General',
                 $COL_REPEAT_TYPE TEXT DEFAULT 'NONE',
+                $COL_CUSTOM_DAYS TEXT DEFAULT '',
                 $COL_SOUND_URI TEXT DEFAULT '',
                 $COL_SOUND_TITLE TEXT DEFAULT 'Default Alarm Sound',
                 $COL_ALERT_TYPE TEXT DEFAULT 'ALARM',
@@ -68,6 +70,13 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
                 Log.e("ReminderDbHelper", "Error during DB migration to v2", e)
             }
         }
+        if (oldVersion < 3) {
+            try {
+                db.execSQL("ALTER TABLE $TABLE_REMINDERS ADD COLUMN $COL_CUSTOM_DAYS TEXT DEFAULT ''")
+            } catch (e: Exception) {
+                Log.e("ReminderDbHelper", "Error during DB migration to v3", e)
+            }
+        }
     }
 
     fun insertReminder(reminder: Reminder): Long {
@@ -80,6 +89,7 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
             put(COL_PRIORITY, reminder.priority)
             put(COL_CATEGORY, reminder.category)
             put(COL_REPEAT_TYPE, reminder.repeatType)
+            put(COL_CUSTOM_DAYS, reminder.customDays)
             put(COL_SOUND_URI, reminder.soundUri ?: "")
             put(COL_SOUND_TITLE, reminder.soundTitle)
             put(COL_ALERT_TYPE, reminder.alertType)
@@ -98,6 +108,7 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
             put(COL_PRIORITY, reminder.priority)
             put(COL_CATEGORY, reminder.category)
             put(COL_REPEAT_TYPE, reminder.repeatType)
+            put(COL_CUSTOM_DAYS, reminder.customDays)
             put(COL_SOUND_URI, reminder.soundUri ?: "")
             put(COL_SOUND_TITLE, reminder.soundTitle)
             put(COL_ALERT_TYPE, reminder.alertType)
@@ -185,6 +196,37 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
         return list
     }
 
+    fun getTomorrowReminders(): List<Reminder> {
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_YEAR, 1)
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        val startOfTomorrow = cal.timeInMillis
+
+        cal.set(Calendar.HOUR_OF_DAY, 23)
+        cal.set(Calendar.MINUTE, 59)
+        cal.set(Calendar.SECOND, 59)
+        cal.set(Calendar.MILLISECOND, 999)
+        val endOfTomorrow = cal.timeInMillis
+
+        val list = mutableListOf<Reminder>()
+        val db = readableDatabase
+        val cursor = db.query(
+            TABLE_REMINDERS, null,
+            "$COL_TRIGGER_TIME BETWEEN ? AND ?",
+            arrayOf(startOfTomorrow.toString(), endOfTomorrow.toString()),
+            null, null, "$COL_TRIGGER_TIME ASC"
+        )
+        cursor.use {
+            while (it.moveToNext()) {
+                list.add(parseCursor(it))
+            }
+        }
+        return list
+    }
+
     fun getCompletedReminders(): List<Reminder> {
         val list = mutableListOf<Reminder>()
         val db = readableDatabase
@@ -206,7 +248,7 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
 
         if (!reminder.isCompleted && reminder.repeatType != "NONE") {
             // Roll over to next repeating interval
-            val nextTime = calculateNextTrigger(reminder.triggerTimeMillis, reminder.repeatType)
+            val nextTime = calculateNextTrigger(reminder)
             val updated = reminder.copy(
                 triggerTimeMillis = nextTime,
                 isCompleted = false
@@ -220,13 +262,30 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
         }
     }
 
-    private fun calculateNextTrigger(currentTime: Long, repeatType: String): Long {
+    private fun calculateNextTrigger(reminder: Reminder): Long {
+        val currentTime = reminder.triggerTimeMillis
+        val repeatType = reminder.repeatType.uppercase()
+
+        if (repeatType == "CUSTOM") {
+            val selectedDays = reminder.getCustomDaysSet()
+            if (selectedDays.isNotEmpty()) {
+                val cal = Calendar.getInstance().apply { timeInMillis = currentTime }
+                for (i in 1..7) {
+                    cal.add(Calendar.DAY_OF_YEAR, 1)
+                    if (selectedDays.contains(cal.get(Calendar.DAY_OF_WEEK))) {
+                        return cal.timeInMillis
+                    }
+                }
+            }
+        }
+
         val cal = Calendar.getInstance().apply { timeInMillis = currentTime }
         when (repeatType) {
             "DAILY" -> cal.add(Calendar.DAY_OF_YEAR, 1)
             "WEEKLY" -> cal.add(Calendar.WEEK_OF_YEAR, 1)
             "MONTHLY" -> cal.add(Calendar.MONTH, 1)
             "YEARLY" -> cal.add(Calendar.YEAR, 1)
+            else -> cal.add(Calendar.DAY_OF_YEAR, 1)
         }
         return cal.timeInMillis
     }
@@ -235,10 +294,12 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
         val soundUriIdx = cursor.getColumnIndex(COL_SOUND_URI)
         val soundTitleIdx = cursor.getColumnIndex(COL_SOUND_TITLE)
         val alertTypeIdx = cursor.getColumnIndex(COL_ALERT_TYPE)
+        val customDaysIdx = cursor.getColumnIndex(COL_CUSTOM_DAYS)
 
         val soundUri = if (soundUriIdx != -1) cursor.getString(soundUriIdx).takeIf { !it.isNullOrBlank() } else null
         val soundTitle = if (soundTitleIdx != -1) cursor.getString(soundTitleIdx) ?: "Default Alarm Sound" else "Default Alarm Sound"
         val alertType = if (alertTypeIdx != -1) cursor.getString(alertTypeIdx) ?: "ALARM" else "ALARM"
+        val customDays = if (customDaysIdx != -1) cursor.getString(customDaysIdx) ?: "" else ""
 
         return Reminder(
             id = cursor.getLong(cursor.getColumnIndexOrThrow(COL_ID)),
@@ -249,6 +310,7 @@ class ReminderDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NA
             priority = cursor.getString(cursor.getColumnIndexOrThrow(COL_PRIORITY)) ?: "MEDIUM",
             category = cursor.getString(cursor.getColumnIndexOrThrow(COL_CATEGORY)) ?: "General",
             repeatType = cursor.getString(cursor.getColumnIndexOrThrow(COL_REPEAT_TYPE)) ?: "NONE",
+            customDays = customDays,
             soundUri = soundUri,
             soundTitle = soundTitle,
             alertType = alertType,
