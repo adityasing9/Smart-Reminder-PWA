@@ -61,6 +61,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadReminders()
+        UpdateManager.checkPendingInstall(this)
     }
 
     private fun checkPermissions() {
@@ -258,6 +259,10 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_check_update -> {
                 UpdateManager.checkForUpdates(this, isManualCheck = true)
+                true
+            }
+            R.id.action_update_settings -> {
+                UpdateManager.showUpdateSettingsDialog(this)
                 true
             }
             R.id.action_exact_alarm_settings -> {

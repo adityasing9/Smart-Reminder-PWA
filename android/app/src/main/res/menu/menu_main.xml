@@ -21,6 +21,12 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_update_settings"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="⚙️ Update Settings (Auto-Download)"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_exact_alarm_settings"
         android:title="⚡ Alarm &amp; Notification Settings"
         app:showAsAction="never" />
